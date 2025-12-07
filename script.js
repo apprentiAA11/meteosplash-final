@@ -2094,3 +2094,17 @@ function applyRainFX(j) {
   const dens = Math.min(1, rainAmt / 3);
   document.body.style.setProperty("--rain-density", dens);
 }
+function updateRadarClock(timeISO, timezone) {
+  const el = document.getElementById("radar-time");
+  if (!el || !timezone) return;
+
+  const d = new Date(timeISO);
+  const local = new Date(
+    d.toLocaleString("en-US", { timeZone: timezone })
+  );
+
+  const h = String(local.getHours()).padStart(2, "0");
+  const m = String(local.getMinutes()).padStart(2, "0");
+
+  el.textContent = `${h}:${m}`;
+}
