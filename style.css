@@ -983,6 +983,20 @@ body.theme-night .radar-tabs {
   background: transparent;
   color: var(--text-muted);
 }
+.radar-time {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: .8;
+  margin-right: 8px;
+  transition: color .4s ease;
+}
+
+body.theme-night .radar-time {
+  color: #cbd5f5;
+}
+body.theme-day .radar-time {
+  color: #1e293b;
+}
 
 .radar-tab-active {
   background: linear-gradient(135deg, #4f8dff, #7f63ff);
