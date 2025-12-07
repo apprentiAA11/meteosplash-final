@@ -633,6 +633,12 @@ async function loadCityWeather(ci) {
     applyWeatherBackground(j.current.weather_code);
     renderCityList();
     updateTip(j);
+    // --- Timezone logic ---
+    if (j.utc_offset_seconds !== undefined) {
+      cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
+      updateCityTimeAndTheme();
+    }
+
   } catch (err) {
     console.error("Erreur météo", err);
     alert("Impossible de récupérer la météo.");
@@ -743,9 +749,9 @@ function renderForecast(j, days = 7) {
 
     item.innerHTML = `
       <div class="forecast-line">
-        <span class="f-day">${formatDayShort(day)}</span>
+        <span class="f-day">${formatDayShort(day)} ${new Date(day).getDate()}</span>
         <span class="f-wind">${wind} km/h</span>
-        <span class="f-icon">${iconForWeatherCode(code)}</span>
+        <span class="f-icon" data-tooltip="${labelForWeatherCode(code)}">${iconForWeatherCode(code)}</span>
         <span class="f-temps">Max ${tmax}° · Min ${tmin}°</span>
         <span class="f-rain">${rain} mm</span>
         <span class="f-prob">${prob}%</span>
@@ -2094,17 +2100,98 @@ function applyRainFX(j) {
   const dens = Math.min(1, rainAmt / 3);
   document.body.style.setProperty("--rain-density", dens);
 }
-function updateRadarClock(timeISO, timezone) {
-  const el = document.getElementById("radar-time");
+
+
+function updateRadarClock(isoTime, timezone) {
+  const el = document.getElementById("radar-clock");
+  if (!el || !isoTime) return;
+  try {
+    const d = new Date(isoTime);
+    const opts = { hour: '2-digit', minute: '2-digit', timeZone: timezone || 'UTC' };
+    el.textContent = new Intl.DateTimeFormat('fr-FR', opts).format(d);
+  } catch(e) {}
+}
+
+
+
+/* -------------------------------------------------
+   HORLOGE LOCALE AUTO (mise à jour continue)
+------------------------------------------------- */
+let radarClockTimer = null;
+
+function startRadarClock(timezone) {
+  const el = document.getElementById("radar-clock");
   if (!el || !timezone) return;
 
-  const d = new Date(timeISO);
-  const local = new Date(
-    d.toLocaleString("en-US", { timeZone: timezone })
-  );
+  if (radarClockTimer) clearInterval(radarClockTimer);
 
-  const h = String(local.getHours()).padStart(2, "0");
-  const m = String(local.getMinutes()).padStart(2, "0");
+  const update = () => {
+    try {
+      const now = new Date();
+      const local = new Date(
+        now.toLocaleString("en-US", { timeZone: timezone })
+      );
+      const h = String(local.getHours()).padStart(2, "0");
+      const m = String(local.getMinutes()).padStart(2, "0");
+      el.textContent = `${h}:${m}`;
+    } catch (e) {}
+  };
 
-  el.textContent = `${h}:${m}`;
+  update();
+  radarClockTimer = setInterval(update, 30000); // toutes les 30 secondes
 }
+
+
+/* ================= HORLOGE LOCALE (SAFE PATCH) ================= */
+let __radarClockTimerSafe = null;
+function startRadarClockSafe(timezone) {
+  const el = document.getElementById("radar-clock");
+  if (!el || !timezone) return;
+
+  if (__radarClockTimerSafe) clearInterval(__radarClockTimerSafe);
+
+  const tick = () => {
+    try {
+      const now = new Date();
+      const local = new Date(
+        now.toLocaleString("en-US", { timeZone: timezone })
+      );
+      const h = String(local.getHours()).padStart(2, "0");
+      const m = String(local.getMinutes()).padStart(2, "0");
+      el.textContent = `${h}:${m}`;
+    } catch (e) {}
+  };
+
+  tick();
+  __radarClockTimerSafe = setInterval(tick, 30000);
+}
+
+
+/* --------------------------------------------------------------------------
+   Heure locale + thème auto basé sur la ville sélectionnée
+-------------------------------------------------------------------------- */
+
+let cityTimeOffsetMinutes = null;
+
+function updateCityTimeAndTheme() {
+  const radarClock = document.getElementById("radar-clock");
+  if (!radarClock || cityTimeOffsetMinutes === null) return;
+
+  const nowUTC = new Date();
+  const cityDate = new Date(nowUTC.getTime() + cityTimeOffsetMinutes * 60000);
+
+  const h = String(cityDate.getHours()).padStart(2, "0");
+  const m = String(cityDate.getMinutes()).padStart(2, "0");
+  radarClock.textContent = `${h}:${m}`;
+
+  if (themeMode === "auto") {
+    const hour = cityDate.getHours();
+    const baseTheme = hour >= 7 && hour < 21 ? "theme-day" : "theme-night";
+
+    document.body.classList.remove("theme-day", "theme-night");
+    document.body.classList.add(baseTheme);
+  }
+}
+
+// Update every minute
+setInterval(updateCityTimeAndTheme, 60 * 1000);
