@@ -220,6 +220,29 @@ body.theme-night .glass-card {
   gap: 8px;
 }
 
+
+/* ====================================================================== */
+/*  Heure locale près du bouton Radar                                   */                          
+/* ====================================================================== */
+
+.radar-clock {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1b1440;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+body.theme-night .radar-clock {
+  background: rgba(15, 16, 44, 0.95);
+  color: #eef0ff;
+}
+
+
 /* ====================================================================== */
 /* BOUTONS                                                                */
 /* ====================================================================== */
@@ -982,20 +1005,6 @@ body.theme-night .radar-tabs {
   cursor: pointer;
   background: transparent;
   color: var(--text-muted);
-}
-.radar-time {
-  font-size: 13px;
-  font-weight: 500;
-  opacity: .8;
-  margin-right: 8px;
-  transition: color .4s ease;
-}
-
-body.theme-night .radar-time {
-  color: #cbd5f5;
-}
-body.theme-day .radar-time {
-  color: #1e293b;
 }
 
 .radar-tab-active {
@@ -2152,36 +2161,34 @@ body.theme-night .f-icon {
   transform: translateX(-50%) translateY(0);
 }
 /* fin icônes prévisions */
-/* Tooltip météo instantané – patch ciblé */
-.f-icon {
-  position: relative;
-  pointer-events: auto;
-}
 
-.f-icon * {
-  pointer-events: none;
-}
 
-.f-icon::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 130%;
-  left: 50%;
-  transform: translateX(-50%) scale(.98);
-  background: rgba(20,20,28,.95);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .12s ease, transform .12s ease;
-  z-index: 10;
+.radar-clock{
+  font-size:0.85rem;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.85);
+  margin-right:4px;
 }
-
-.f-icon:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
+body.theme-night .radar-clock{
+  background:rgba(15,16,44,.9);
+  color:#eef0ff;
 }
-
+.f-icon{ position:relative; }
+.f-icon::after{
+  content:attr(data-tooltip);
+  position:absolute;
+  bottom:-28px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#111827;
+  color:#fff;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s ease;
+  white-space:nowrap;
+}
+.f-icon:hover::after{ opacity:1; }
