@@ -81,8 +81,6 @@ function degreeToCardinal(angle) {
   const index = Math.round((angle % 360) / 45) % 8;
   return directions[index];
 }
-  return \"☁️\";
-}
 
 function formatDateISO(date) {
   const y = date.getFullYear();
@@ -629,10 +627,6 @@ async function loadCityWeather(ci) {
 
     renderCurrent(j);
     renderWind(j);
-    if (j.timezone) {
-      window.currentTimezone = j.timezone;
-      updateLocalTime(j.timezone);
-    }
     applyRainFX(j);
     renderForecast(j);
     activateForecastClicks();
@@ -788,7 +782,6 @@ function labelForWeatherCode(code) {
 }
 
 function iconForWeatherCode(code) {
-
   if (code === 0) return "☀️";
   if ([1, 2, 3].includes(code)) return "⛅";
   if ([45, 48].includes(code)) return "🌫";
@@ -2101,27 +2094,3 @@ function applyRainFX(j) {
   const dens = Math.min(1, rainAmt / 3);
   document.body.style.setProperty("--rain-density", dens);
 }
-
-function updateLocalTime(timezone){
-  const container=document.getElementById("local-time");
-  const valueEl=container?.querySelector(".time-value");
-  if(!container||!valueEl||!timezone) return;
-  try{
-    const now=new Date();
-    const time=new Intl.DateTimeFormat("fr-FR",{hour:"2-digit",minute:"2-digit",timeZone:timezone}).format(now);
-    if(valueEl.textContent!==time){
-      valueEl.textContent=time;
-      container.classList.remove("animate");
-      void container.offsetWidth;
-      container.classList.add("animate");
-    }
-  }catch(e){
-    valueEl.textContent="--:--";
-  }
-}
-
-setInterval(()=>{
-  if(window.currentTimezone){
-    updateLocalTime(window.currentTimezone);
-  }
-},1000);
