@@ -758,6 +758,13 @@ body.theme-night .city-item {
   z-index: 30;
 }
 
+.radar-overlay.hidden,
+.day-overlay.hidden {
+  display: none !important;
+  pointer-events: none;
+}
+
+
 .search-overlay.active,
 .radar-overlay.active {
   display: flex;
@@ -2070,6 +2077,9 @@ body.theme-night .history-date-input {
   overflow: hidden;
   opacity: 0;
   transition: opacity 0.35s ease;
+}
+.rain-scene {
+  pointer-events: none;
 }
 
 body.weather-rain .rain-scene {
