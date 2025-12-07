@@ -29,8 +29,7 @@
 
       <div class="header-right">
         <div class="header-buttons">
-          <div id="local-time" class="local-time"><span class="time-icon">🕒</span><span class="time-value">--:--</span></div>
-<button id="btn-radar" class="icon-button">🛰 Radar</button>
+          <button id="btn-radar" class="icon-button">🛰 Radar</button>
           <button id="btn-theme-toggle" class="icon-button theme-toggle">🌓 Auto</button>
           <button id="btn-geolocate" class="icon-button location">📍 Ma position</button>
           <button id="btn-speak" class="icon-button speak">🗣 Météo parlée</button>
@@ -39,7 +38,7 @@
     </header>
 
     <!-- ================= POPUP RADAR ================= -->
-    <div id="radar-overlay" class="radar-overlay hidden">
+    <div id="radar-overlay" class="radar-overlay">
       <div class="overlay-backdrop"></div>
 
       <div class="radar-popup glass-card">
@@ -212,7 +211,7 @@
   <div id="toast" class="toast"></div>
 
 <!-- =============== OVERLAY DÉTAIL JOUR =============== -->
-<div id="day-overlay" class="day-overlay hidden">
+<div id="day-overlay" class="day-overlay active-day-overlay">
   <div class="overlay-backdrop"></div>
 
   <div class="day-popup glass-card">
@@ -229,7 +228,7 @@
       <button id="day-tab-humidity" class="pill-button">Humidité</button>
     </div>
 
-    <canvas id="chart-temp" class="day-graph"></canvas>
+    <canvas id="chart-temp" class="day-graph active-day-graph"></canvas>
     <canvas id="chart-rain" class="day-graph"></canvas>
     <canvas id="chart-wind" class="day-graph"></canvas>
     <canvas id="chart-humidity" class="day-graph"></canvas>
