@@ -234,6 +234,15 @@
     <canvas id="chart-humidity" class="day-graph"></canvas>
   </div>
 </div>
+  <!-- DEBUG souris : À SUPPRIMER APRÈS -->
+  <script>
+    document.addEventListener("mousemove", e => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (el) console.log(el);
+    });
+  </script>
+</body>
+</html>
 
 </body>
 </html>
