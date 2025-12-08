@@ -633,6 +633,12 @@ async function loadCityWeather(ci) {
     applyWeatherBackground(j.current.weather_code);
     renderCityList();
     updateTip(j);
+    // --- Timezone logic ---
+    if (j.utc_offset_seconds !== undefined) {
+      cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
+      updateCityTimeAndTheme();
+    }
+
   } catch (err) {
     console.error("Erreur météo", err);
     alert("Impossible de récupérer la météo.");
@@ -2160,96 +2166,32 @@ function startRadarClockSafe(timezone) {
   __radarClockTimerSafe = setInterval(tick, 30000);
 }
 
+
 /* --------------------------------------------------------------------------
-   FINE RAIN ENGINE v2 – more perceptible, still realistic
+   Heure locale + thème auto basé sur la ville sélectionnée
 -------------------------------------------------------------------------- */
 
-const fineRainCanvas = document.getElementById("rain-canvas");
-const fineRainCtx = fineRainCanvas ? fineRainCanvas.getContext("2d") : null;
+let cityTimeOffsetMinutes = null;
 
-let fineDrops = [];
-let fineRainActive = false;
-let fineWindX = 0;
+function updateCityTimeAndTheme() {
+  const radarClock = document.getElementById("radar-clock");
+  if (!radarClock || cityTimeOffsetMinutes === null) return;
 
-function resizeFineRain() {
-  if (!fineRainCanvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  fineRainCanvas.width = window.innerWidth * dpr;
-  fineRainCanvas.height = window.innerHeight * dpr;
-  fineRainCtx.setTransform(dpr,0,0,dpr,0,0);
-}
-window.addEventListener("resize", resizeFineRain);
-resizeFineRain();
+  const nowUTC = new Date();
+  const cityDate = new Date(nowUTC.getTime() + cityTimeOffsetMinutes * 60000);
 
-function spawnFineDrop() {
-  const isStreak = Math.random() < 0.35;
-  return {
-    x: Math.random() * fineRainCanvas.width,
-    y: -10,
-    vy: 0.9 + Math.random() * 1.0,
-    life: 34 + Math.random() * 24,
-    size: isStreak ? 2 : 1,
-    len: isStreak ? 4 + Math.random()*3 : 1,
-    alpha: 0.22 + Math.random() * 0.3
-  };
-}
+  const h = String(cityDate.getHours()).padStart(2, "0");
+  const m = String(cityDate.getMinutes()).padStart(2, "0");
+  radarClock.textContent = `${h}:${m}`;
 
-function startFineRain(density, windSpeed) {
-  fineDrops = [];
-  fineWindX = Math.max(-1.1, Math.min(1.1, windSpeed / 55));
-  for (let i = 0; i < density; i++) {
-    fineDrops.push(spawnFineDrop());
-  }
-  if (!fineRainActive) {
-    fineRainActive = true;
-    requestAnimationFrame(renderFineRain);
+  if (themeMode === "auto") {
+    const hour = cityDate.getHours();
+    const baseTheme = hour >= 7 && hour < 21 ? "theme-day" : "theme-night";
+
+    document.body.classList.remove("theme-day", "theme-night");
+    document.body.classList.add(baseTheme);
   }
 }
 
-function stopFineRain() {
-  fineRainActive = false;
-  fineDrops = [];
-  fineRainCtx && fineRainCtx.clearRect(0,0,fineRainCanvas.width,fineRainCanvas.height);
-}
-
-function renderFineRain() {
-  if (!fineRainActive || !fineRainCtx) return;
-
-  fineRainCtx.clearRect(0,0,fineRainCanvas.width,fineRainCanvas.height);
-
-  fineDrops.forEach(d => {
-    d.y += d.vy;
-    d.x += fineWindX * (0.4 + Math.random() * 0.4);
-    d.life--;
-
-    if (d.life <= 0 || d.y > fineRainCanvas.height) {
-      Object.assign(d, spawnFineDrop());
-      return;
-    }
-
-    fineRainCtx.strokeStyle = `rgba(200,210,230,${d.alpha})`;
-    fineRainCtx.lineWidth = d.size;
-    fineRainCtx.beginPath();
-    fineRainCtx.moveTo(d.x, d.y);
-    fineRainCtx.lineTo(d.x, d.y + d.len);
-    fineRainCtx.stroke();
-  });
-
-  if (Math.random() > 0.2) {
-    fineDrops.push(spawnFineDrop());
-    if (fineDrops.length > 320) fineDrops.shift();
-  }
-
-  requestAnimationFrame(renderFineRain);
-}
-
-function applyRainFX(j){
-  if(!j || !j.current) return;
-  const r = (j.current.precipitation || 0) + (j.current.rain || 0);
-  if(r > 0){
-    const density = Math.min(240, 100 + Math.round(r * 60));
-    startFineRain(density, j.current.wind_speed_10m || 0);
-  }else{
-    stopFineRain();
-  }
-}
+// Update every minute
+setInterval(updateCityTimeAndTheme, 60 * 1000);
