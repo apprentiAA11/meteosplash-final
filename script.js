@@ -2102,15 +2102,27 @@ function applyRainFX(j) {
 }
 
 
-function updateRadarClock(isoTime, timezone) {
+// =================== HEURE LOCALE FIABLE ===================
+let cityTimeZone = null;
+
+function updateRadarClock() {
   const el = document.getElementById("radar-clock");
-  if (!el || !isoTime) return;
-  try {
-    const d = new Date(isoTime);
-    const opts = { hour: '2-digit', minute: '2-digit', timeZone: timezone || 'UTC' };
-    el.textContent = new Intl.DateTimeFormat('fr-FR', opts).format(d);
-  } catch(e) {}
+  if (!el || !cityTimeZone) return;
+
+  const now = new Date();
+  const formatted = new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: cityTimeZone
+  }).format(now);
+
+  el.textContent = formatted;
 }
+
+// appel toutes les minutes
+setInterval(updateRadarClock, 60_000);
+
 
 
 
