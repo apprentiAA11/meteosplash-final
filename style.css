@@ -2088,11 +2088,10 @@ body.theme-night .history-date-input {
 .rain-scene {
   position: fixed;
   inset: 0;
-  pointer-events: none;
-  z-index: 0;
+  pointer-events: none; /* ✅ LA CLÉ */
   overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.35s ease;
+  z-index: 0;
+  filter: blur(0.2px);
 }
 
 body.weather-rain .rain-scene {
