@@ -385,6 +385,7 @@ function setGeolocateError() {
 }
 
 
+
 async function geolocateByIp() {
   try {
     const r = await fetch("https://ipapi.co/json/");
@@ -623,6 +624,11 @@ async function loadCityWeather(ci) {
     const r = await fetch(url);
     const j = await r.json();
 
+    if (!j || !j.current || j.current.temperature_2m === undefined) {
+      console.warn("Météo partielle", j);
+      return;
+    }
+
     weatherCache[ci.name] = j;
 
     renderCurrent(j);
@@ -638,10 +644,11 @@ async function loadCityWeather(ci) {
   cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
 }
 updateRadarClock();
+updateRadarClock();
 
   } catch (err) {
     console.error("Erreur météo", err);
-    showToast("Données météo temporairement indisponibles", "error");
+    
   }
 }
 
@@ -2069,18 +2076,7 @@ function initRainScene() {
   }
 }
 
-function applyRainFX(j) {
-  if (!j || !j.current) return;
-
-  const c = j.current;
-  const rainAmt = c.precipitation ?? 0;
-  const windDir = c.wind_direction_10m ?? 0;
-  const windSpeed = c.wind_speed_10m ?? 0;
-
-  // On force le mode rain dès qu'il y a la moindre précipitation
-  if (rainAmt > 0) {
-    document.body.classList.add("weather-rain");
-  } else {
+else {
     document.body.classList.remove("weather-rain");
   }
 
@@ -2211,3 +2207,39 @@ function updateCityTimeAndTheme() {
 
 // Update every minute
 setInterval(updateCityTimeAndTheme, 60 * 1000);
+
+
+/* ================= PLUIE REALISTE PRO ================= */
+function applyRainFX(j) {
+  const scene = document.getElementById("rain-scene");
+  if (!scene) return;
+
+  scene.innerHTML = "";
+
+  const rain = j.current?.rain ?? 0;
+  const windDir = j.current?.wind_direction_10m ?? 180;
+  const windSpeed = j.current?.wind_speed_10m ?? 0;
+
+  if (rain < 0.1) return;
+
+  const drops = Math.min(260, 60 + rain * 35);
+  const angle = (windDir - 180) * (windSpeed / 40);
+  const dxBase = Math.max(-30, Math.min(30, angle));
+
+  for (let i = 0; i < drops; i++) {
+    const drop = document.createElement("div");
+    drop.className = "rain-drop";
+
+    const depth = Math.random();
+    const size = 1 + depth * 1.5;
+
+    drop.style.left = Math.random() * 100 + "vw";
+    drop.style.width = size + "px";
+    drop.style.height = size + "px";
+    drop.style.opacity = 0.25 + depth * 0.6;
+    drop.style.setProperty("--dx", `${dxBase * (0.5 + depth)}vw`);
+    drop.style.animationDuration = 1.2 - depth * 0.6 + "s";
+
+    scene.appendChild(drop);
+  }
+}
