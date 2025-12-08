@@ -380,10 +380,10 @@ function setGeolocateSuccess(cityName) {
   }, 1200);
 }
 
-function setGeolocateError(message) {
-  showToast(message || "Impossible de déterminer votre position.", "error");
+function setGeolocateError() {
   setGeolocateIdle();
 }
+
 
 async function geolocateByIp() {
   try {
@@ -635,13 +635,13 @@ async function loadCityWeather(ci) {
     updateTip(j);
     // --- Timezone logic ---
     if (j.utc_offset_seconds !== undefined) {
-      cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
-      updateCityTimeAndTheme();
-    }
+  cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
+}
+updateRadarClock();
 
   } catch (err) {
     console.error("Erreur météo", err);
-    alert("Impossible de récupérer la météo.");
+    showToast("Données météo temporairement indisponibles", "error");
   }
 }
 
