@@ -2220,3 +2220,40 @@ body.theme-night .radar-clock{
     transform: translate3d(var(--dx), 110vh, 0);
   }
 }
+/* ================= FIX INTERACTION DEFINITIF ================= */
+
+/* Fond animé TOUJOURS derrière */
+#rain-scene {
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+/* UI principale FORCÉMENT au-dessus */
+.app-shell {
+  position: relative;
+  z-index: 10 !important;
+}
+
+/* Cartes */
+.glass-card {
+  position: relative;
+  z-index: 11;
+}
+
+/* Header + boutons */
+.app-header {
+  position: relative;
+  z-index: 12;
+}
+
+/* Overlays (radar, recherche, jour) */
+.radar-overlay,
+.search-overlay,
+.day-overlay {
+  z-index: 50 !important;
+}
+body::before,
+body::after {
+  pointer-events: none !important;
+}
+
