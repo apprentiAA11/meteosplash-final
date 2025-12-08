@@ -2119,6 +2119,10 @@ function updateRadarClock() {
 
   el.textContent = formatted;
 }
+if (j.timezone) {
+  cityTimeZone = j.timezone;
+  updateRadarClock();
+}
 
 // appel toutes les minutes
 setInterval(updateRadarClock, 60_000);
