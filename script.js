@@ -633,7 +633,7 @@ async function loadCityWeather(ci) {
 
     renderCurrent(j);
     renderWind(j);
-    applyRainFX(j);
+    
     renderForecast(j);
     activateForecastClicks();
     applyWeatherBackground(j.current.weather_code);
