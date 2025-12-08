@@ -114,10 +114,6 @@ body.weather-storm::after {
 }
 
 /* Animations */
-@keyframes rain-fall {
-  from {
-    transform: translateY(0);
-  }
   to {
     transform: translateY(24px);
   }
@@ -2085,19 +2081,8 @@ body.theme-night .history-date-input {
 /* ===========================================================
    PLUIE REALISTE – GOUTTES INDIVIDUELLES (Option A + B style)
    =========================================================== */
-.rain-scene {
-  position: fixed;
-  inset: 0;
-  pointer-events: none; /* ✅ LA CLÉ */
-  overflow: hidden;
-  z-index: 0;
-  filter: blur(0.2px);
-}
 
-body.weather-rain .rain-scene {
-  opacity: 1;
-}
-
+body.weather-rain 
 .raindrop {
   position: absolute;
   top: -80px;
@@ -2194,31 +2179,8 @@ body.theme-night .radar-clock{
 
 /* ================= PLUIE REALISTE PRO ================= */
 
-.rain-scene {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-  filter: blur(0.2px);
-}
 
-.rain-drop {
-  position: absolute;
-  top: -10vh;
-  width: 2px;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.85);
-  animation-name: rain-fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
 
-@keyframes rain-fall {
-  to {
-    transform: translate3d(var(--dx), 110vh, 0);
-  }
 }
 /* ================= FIX INTERACTION DEFINITIF ================= */
 
@@ -2257,3 +2219,21 @@ body::after {
   pointer-events: none !important;
 }
 
+
+/* ================= INTERACTION SAFETY BASE ================= */
+.radar-overlay,
+.search-overlay,
+.day-overlay {
+  pointer-events: none;
+}
+
+.radar-overlay.active,
+.search-overlay.active,
+.day-overlay.active {
+  pointer-events: auto;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 5;
+}
