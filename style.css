@@ -2237,3 +2237,31 @@ body::after {
   position: relative;
   z-index: 5;
 }
+/* ================= FIX DEFINITIF BACKDROP ================= */
+
+/* Backdrop totalement inactif par défaut */
+.overlay-backdrop {
+  pointer-events: none;
+}
+
+/* Backdrop cliquable UNIQUEMENT quand overlay actif */
+.radar-overlay.active .overlay-backdrop,
+.day-overlay.active .overlay-backdrop,
+.search-overlay.active .overlay-backdrop {
+  pointer-events: auto;
+}
+/* Overlay complètement neutralisé si non actif */
+.radar-overlay,
+.day-overlay,
+.search-overlay {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Overlay actif = visible + cliquable */
+.radar-overlay.active,
+.day-overlay.active,
+.search-overlay.active {
+  visibility: visible;
+  pointer-events: auto;
+}
