@@ -87,66 +87,8 @@ body.weather-storm::before {
   transition: opacity 1s ease;
 }
 
-/* ==========================================================
-   Pluie ultra réaliste – texture diffuse (ANTI BATONS)
-   ========================================================== */
+/* pluie légère */
 
-#rain-scene {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-}
-
-body.weather-rain #rain-scene {
-  opacity: 1;
-}
-
-/* texture pluie principale */
-#rain-scene::before {
-  content: "";
-  position: absolute;
-  inset: -50px;
-  background-image:
-    repeating-linear-gradient(
-      115deg,
-      rgba(255,255,255,0.12) 0px,
-      rgba(255,255,255,0.12) 1px,
-      transparent 1px,
-      transparent 12px
-    );
-  animation: rain-drift 6s linear infinite;
-  filter: blur(0.6px);
-  opacity: 0.65;
-}
-
-/* texture pluie secondaire (diffuse) */
-#rain-scene::after {
-  content: "";
-  position: absolute;
-  inset: -60px;
-  background-image:
-    repeating-linear-gradient(
-      115deg,
-      rgba(255,255,255,0.06) 0px,
-      rgba(255,255,255,0.06) 1px,
-      transparent 1px,
-      transparent 18px
-    );
-  animation: rain-drift 10s linear infinite;
-  filter: blur(1.2px);
-  opacity: 0.5;
-}
-
-@keyframes rain-drift {
-  from {
-    transform: translate(0, 0);
-  }
-  to {
-    transform: translate(-60px, 220px);
-  }
-}
 
 /* neige */
 body.weather-snow::after {
@@ -2250,45 +2192,26 @@ body.theme-night .radar-clock{
   white-space:nowrap;
 }
 .f-icon:hover::after{ opacity:1; }
-/* ==========================================================
-   Prévisions – bouton actif en ROUGE (MODE NUIT UNIQUEMENT)
-   ========================================================== */
-
-body.theme-night .forecast-toggle .pill-button-active {
-  background: linear-gradient(135deg, #ab071a, #ab071a);
-  color: #ffffff;
-  box-shadow: 0 6px 16px rgba(255, 60, 80, 0.5);
-}
 
 
-/* =====================
-   Pluie canvas réaliste
-   ===================== */
-#rain-canvas {
+/* ===================================================== */
+/* PLUIE RÉALISTE – CANVAS                               */
+/* ===================================================== */
+
+.rain-scene {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
-  display: none;
-  filter: blur(0.6px);
+  z-index: 0;
+  overflow: hidden;
 }
 
-body.weather-rain #rain-canvas {
+#rain-canvas {
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
-/* ==========================================================
-   PATCH STABLE GLOBAL – Anti overlays qui bloquent les clics
-   ========================================================== */
-
-.radar-overlay:not(.active),
-.search-overlay:not(.active),
-.day-overlay:not(.active) {
-  pointer-events: none;
-}
-
-.radar-overlay.active,
-.search-overlay.active,
-.day-overlay.active {
-  pointer-events: auto;
+body:not(.weather-rain):not(.weather-storm) .rain-scene {
+  display: none;
 }
