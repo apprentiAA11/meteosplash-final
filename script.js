@@ -2269,6 +2269,8 @@ function resizeRain() {
   rainCanvas.style.width = "100%";
   rainCanvas.style.height = "100%";
   rainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // ✅ ICI — FLUO BLUR (anti "bâtons")
+  rainCtx.filter = "blur(0.6px)";
 }
 
 window.addEventListener("resize", resizeRain);
