@@ -2217,7 +2217,7 @@ function updateCityTimeAndTheme() {
 // Update every minute
 setInterval(updateCityTimeAndTheme, 60 * 1000);
 function suggestNearbyCity(currentLat, currentLon) {
-  if (!cities || cities.length === 0) return;
+  if (!Array.isArray(cities) || cities.length === 0) return;
 
   function distanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -2236,26 +2236,33 @@ function suggestNearbyCity(currentLat, currentLon) {
   let minDist = Infinity;
 
   cities.forEach(c => {
+    // ⛔ ignorer la position réseau actuelle
+    if (c.isCurrentLocation) return;
+    if (c.lat == null || c.lon == null) return;
+
     const d = distanceKm(currentLat, currentLon, c.lat, c.lon);
+
     if (d < minDist) {
       minDist = d;
       closest = c;
     }
   });
 
-  if (closest && minDist < 30) {
-    showToast(
-      `Position approximative. Utiliser ${closest.name} ?`,
-      "action",
-      {
-        label: "Oui",
-        onClick: () => {
-        savePreferredCity(city);   // ✅ POINT 4 ICI
-        selectCity(city);          // ✅ POINT 4 ICI
+  if (!closest || minDist > 30) return;
+
+  showToast(
+    `Position approximative détectée. Utiliser ${closest.name} ?`,
+    "action",
+    {
+      label: "Oui",
+      onClick: () => {
+        savePreferredCity(closest); // ✅ bonne variable
+        selectCity(closest);        // ✅ bonne variable
       }
-    );
-  }
+    }
+  );
 }
+
 function savePreferredCity(city) {
   localStorage.setItem("preferredCity", JSON.stringify(city));
 }
