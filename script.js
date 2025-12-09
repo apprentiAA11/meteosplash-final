@@ -1943,7 +1943,10 @@ function init() {
   applyTheme();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  const preferred = loadPreferredCity();
+  if (preferred) selectCity(preferred);
+});
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
@@ -2251,3 +2254,15 @@ function suggestNearbyCity(currentLat, currentLon) {
     );
   }
 }
+function savePreferredCity(city) {
+  localStorage.setItem("preferredCity", JSON.stringify(city));
+}
+
+function loadPreferredCity() {
+  try {
+    return JSON.parse(localStorage.getItem("preferredCity"));
+  } catch {
+    return null;
+  }
+}
+
