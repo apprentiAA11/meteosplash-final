@@ -2296,14 +2296,25 @@ function renderRain() {
   rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
 
   for (const d of rainDrops) {
-    rainCtx.strokeStyle = `rgba(255,255,255,${d.alpha})`;
+    const grad = rainCtx.createLinearGradient(
+      d.x,
+      d.y,
+      d.x + d.wind * d.len,
+      d.y + d.len
+    );
+
+    grad.addColorStop(0, `rgba(255,255,255,0.0)`);
+    grad.addColorStop(0.4, `rgba(255,255,255,${d.alpha * 0.4})`);
+    grad.addColorStop(1, `rgba(255,255,255,${d.alpha})`);
+
+    rainCtx.strokeStyle = grad;
     rainCtx.lineWidth = 1;
     rainCtx.beginPath();
     rainCtx.moveTo(d.x, d.y);
     rainCtx.lineTo(d.x + d.wind * d.len, d.y + d.len);
     rainCtx.stroke();
 
-    d.x += d.wind;
+    d.x += d.wind * 0.6;
     d.y += d.speed;
 
     if (d.y > window.innerHeight) {
@@ -2314,6 +2325,7 @@ function renderRain() {
 
   requestAnimationFrame(renderRain);
 }
+
 
 function startRain(intensity = 1) {
   rainActive = true;
