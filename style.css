@@ -2192,3 +2192,14 @@ body.theme-night .radar-clock{
   white-space:nowrap;
 }
 .f-icon:hover::after{ opacity:1; }
+
+
+/* =====================
+   Ultra realistic rain
+   ===================== */
+#rain-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
