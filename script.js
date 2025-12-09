@@ -389,19 +389,36 @@ async function geolocateByIp() {
   try {
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
-    if (!j || !j.city || !j.latitude || !j.longitude) {
-      setGeolocateError("Impossible de récupérer votre position approximative.");
+
+    if (!j || j.latitude == null || j.longitude == null) {
+      setGeolocateError("Impossible de déterminer votre position.");
       return;
     }
 
-    addCity({
-      name: j.city,
+    const networkCity = {
+      name: j.city || "Position réseau",
       country: j.country_name || "—",
       lat: j.latitude,
       lon: j.longitude,
       isCurrentLocation: true,
-    });
-    setGeolocateSuccess(j.city);
+    };
+
+    addCity(networkCity);
+    loadCityWeather(networkCity);
+
+    const preferred = loadPreferredCity();
+    if (preferred && preferred.name !== networkCity.name) {
+      showToast(
+        `Position approximative détectée. Utiliser ${preferred.name} ?`,
+        "action",
+        {
+          label: "Oui",
+          onClick: () => loadCityWeather(preferred)
+        }
+      );
+    }
+
+    setGeolocateSuccess(networkCity.name);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
@@ -1938,7 +1955,10 @@ function init() {
   applyTheme();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  const preferred = loadPreferredCity();
+  if (preferred) selectCity(preferred);
+});
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
@@ -2208,3 +2228,75 @@ function updateCityTimeAndTheme() {
 
 // Update every minute
 setInterval(updateCityTimeAndTheme, 60 * 1000);
+function suggestNearbyCity(currentLat, currentLon) {
+  if (!Array.isArray(cities) || cities.length === 0) return;
+
+  function distanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  let closest = null;
+  let minDist = Infinity;
+
+  cities.forEach(c => {
+    // ⛔ ignorer la position réseau actuelle
+    if (c.isCurrentLocation) return;
+    if (c.lat == null || c.lon == null) return;
+
+    const d = distanceKm(currentLat, currentLon, c.lat, c.lon);
+
+    if (d < minDist) {
+      minDist = d;
+      closest = c;
+    }
+  });
+
+  if (!closest || minDist > 30) return;
+
+  showToast(
+    `Position approximative détectée. Utiliser ${closest.name} ?`,
+    "action",
+    {
+      label: "Oui",
+      onClick: () => {
+        savePreferredCity(closest); // ✅ bonne variable
+        selectCity(closest);        // ✅ bonne variable
+      }
+    }
+  );
+}
+
+function savePreferredCity(city) {
+  localStorage.setItem("preferredCity", JSON.stringify(city));
+}
+
+function loadPreferredCity() {
+  try {
+    return JSON.parse(localStorage.getItem("preferredCity"));
+  } catch {
+    return null;
+  }
+}
+
+
+function savePreferredCity(city) {
+  if (!city || city.isCurrentLocation) return;
+  localStorage.setItem("meteosplash-preferred-city", JSON.stringify(city));
+}
+
+function loadPreferredCity() {
+  try {
+    return JSON.parse(localStorage.getItem("meteosplash-preferred-city"));
+  } catch {
+    return null;
+  }
+}
