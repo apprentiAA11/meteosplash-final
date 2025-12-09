@@ -2195,23 +2195,14 @@ body.theme-night .radar-clock{
 
 
 /* ===================================================== */
-/* PLUIE RÉALISTE – CANVAS                               */
+/* BADGE POSITION APPROXIMATIVE                           */
 /* ===================================================== */
-
-.rain-scene {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-#rain-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-body:not(.weather-rain):not(.weather-storm) .rain-scene {
-  display: none;
+.city-badge-location.approx {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ff9800;
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
