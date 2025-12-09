@@ -417,6 +417,10 @@ async function geolocateByIp() {
     setGeolocateError("Impossible de déterminer votre position.");
   }
 }
+if (isApproximateLocation) {
+  showToast("Active le GPS pour une localisation précise.", "error");
+  return;
+}
 
 if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
