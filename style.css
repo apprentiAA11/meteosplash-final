@@ -2192,17 +2192,3 @@ body.theme-night .radar-clock{
   white-space:nowrap;
 }
 .f-icon:hover::after{ opacity:1; }
-
-
-/* ===================================================== */
-/* BADGE POSITION APPROXIMATIVE                           */
-/* ===================================================== */
-.city-badge-location.approx {
-  background: rgba(255, 170, 0, 0.15);
-  color: #ff9800;
-  border: 1px solid rgba(255, 170, 0, 0.4);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
