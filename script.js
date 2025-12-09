@@ -391,40 +391,34 @@ async function geolocateByIp() {
     const j = await r.json();
 
     if (!j || j.latitude == null || j.longitude == null) {
-      setGeolocateError("Impossible de récupérer votre position approximative.");
+      setGeolocateError("Impossible de déterminer votre position.");
       return;
     }
 
-    const lat = j.latitude;
-    const lon = j.longitude;
-
-    const locationCity = {
+    const networkCity = {
       name: j.city || "Position réseau",
       country: j.country_name || "—",
-      lat,
-      lon,
+      lat: j.latitude,
+      lon: j.longitude,
       isCurrentLocation: true,
     };
 
-    addCity(locationCity);
+    addCity(networkCity);
+    loadCityWeather(networkCity);
 
-    // ✅ SUGGESTION = VILLE PRÉFÉRÉE (PAS cities[])
     const preferred = loadPreferredCity();
-    if (preferred) {
+    if (preferred && preferred.name !== networkCity.name) {
       showToast(
         `Position approximative détectée. Utiliser ${preferred.name} ?`,
         "action",
         {
           label: "Oui",
-          onClick: () => {
-            savePreferredCity(preferred);
-            loadCityWeather(preferred);
-          }
+          onClick: () => loadCityWeather(preferred)
         }
       );
     }
 
-    setGeolocateSuccess(locationCity.name);
+    setGeolocateSuccess(networkCity.name);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
@@ -1962,28 +1956,9 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSavedCities();
-
   const preferred = loadPreferredCity();
-  if (preferred) {
-    // on l’injecte explicitement dans cities
-    const exists = cities.some(
-      c => Math.abs(c.lat - preferred.lat) < 0.01 &&
-           Math.abs(c.lon - preferred.lon) < 0.01
-    );
-
-    if (!exists) {
-      cities.push(preferred);
-      saveCities();
-      renderCityList();
-    }
-
-    loadCityWeather(preferred);
-  }
-
-  applyTheme();
+  if (preferred) selectCity(preferred);
 });
-
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
@@ -2301,6 +2276,20 @@ function suggestNearbyCity(currentLat, currentLon) {
 }
 
 function savePreferredCity(city) {
+  localStorage.setItem("preferredCity", JSON.stringify(city));
+}
+
+function loadPreferredCity() {
+  try {
+    return JSON.parse(localStorage.getItem("preferredCity"));
+  } catch {
+    return null;
+  }
+}
+
+
+function savePreferredCity(city) {
+  if (!city || city.isCurrentLocation) return;
   localStorage.setItem("meteosplash-preferred-city", JSON.stringify(city));
 }
 
@@ -2311,5 +2300,3 @@ function loadPreferredCity() {
     return null;
   }
 }
-
-
