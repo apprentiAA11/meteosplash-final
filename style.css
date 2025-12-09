@@ -87,8 +87,66 @@ body.weather-storm::before {
   transition: opacity 1s ease;
 }
 
-/* pluie légère */
+/* ==========================================================
+   Pluie ultra réaliste – texture diffuse (ANTI BATONS)
+   ========================================================== */
 
+#rain-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+}
+
+body.weather-rain #rain-scene {
+  opacity: 1;
+}
+
+/* texture pluie principale */
+#rain-scene::before {
+  content: "";
+  position: absolute;
+  inset: -50px;
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      rgba(255,255,255,0.12) 0px,
+      rgba(255,255,255,0.12) 1px,
+      transparent 1px,
+      transparent 12px
+    );
+  animation: rain-drift 6s linear infinite;
+  filter: blur(0.6px);
+  opacity: 0.65;
+}
+
+/* texture pluie secondaire (diffuse) */
+#rain-scene::after {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 1px,
+      transparent 1px,
+      transparent 18px
+    );
+  animation: rain-drift 10s linear infinite;
+  filter: blur(1.2px);
+  opacity: 0.5;
+}
+
+@keyframes rain-drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-60px, 220px);
+  }
+}
 
 /* neige */
 body.weather-snow::after {
@@ -114,6 +172,10 @@ body.weather-storm::after {
 }
 
 /* Animations */
+@keyframes rain-fall {
+  from {
+    transform: translateY(0);
+  }
   to {
     transform: translateY(24px);
   }
@@ -2081,8 +2143,20 @@ body.theme-night .history-date-input {
 /* ===========================================================
    PLUIE REALISTE – GOUTTES INDIVIDUELLES (Option A + B style)
    =========================================================== */
+.rain-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
 
-body.weather-rain 
+body.weather-rain .rain-scene {
+  opacity: 1;
+}
+
 .raindrop {
   position: absolute;
   top: -80px;
@@ -2176,92 +2250,29 @@ body.theme-night .radar-clock{
   white-space:nowrap;
 }
 .f-icon:hover::after{ opacity:1; }
+/* ==========================================================
+   Prévisions – bouton actif en ROUGE (MODE NUIT UNIQUEMENT)
+   ========================================================== */
 
-/* ================= PLUIE REALISTE PRO ================= */
-
-
-
+body.theme-night .forecast-toggle .pill-button-active {
+  background: linear-gradient(135deg, #ab071a, #ab071a);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(255, 60, 80, 0.5);
 }
-/* ================= FIX INTERACTION DEFINITIF ================= */
 
-/* Fond animé TOUJOURS derrière */
-#rain-scene {
-  z-index: 0 !important;
+
+/* =====================
+   Pluie canvas réaliste
+   ===================== */
+#rain-canvas {
+  position: fixed;
+  inset: 0;
   pointer-events: none;
+  z-index: 1;
+  display: none;
+  filter: blur(0.6px);
 }
 
-/* UI principale FORCÉMENT au-dessus */
-.app-shell {
-  position: relative;
-  z-index: 10 !important;
-}
-
-/* Cartes */
-.glass-card {
-  position: relative;
-  z-index: 11;
-}
-
-/* Header + boutons */
-.app-header {
-  position: relative;
-  z-index: 12;
-}
-
-/* Overlays (radar, recherche, jour) */
-.radar-overlay,
-.search-overlay,
-.day-overlay {
-  z-index: 50 !important;
-}
-body::before,
-body::after {
-  pointer-events: none !important;
-}
-
-
-/* ================= INTERACTION SAFETY BASE ================= */
-.radar-overlay,
-.search-overlay,
-.day-overlay {
-  pointer-events: none;
-}
-
-.radar-overlay.active,
-.search-overlay.active,
-.day-overlay.active {
-  pointer-events: auto;
-}
-
-.app-shell {
-  position: relative;
-  z-index: 5;
-}
-/* ================= FIX DEFINITIF BACKDROP ================= */
-
-/* Backdrop totalement inactif par défaut */
-.overlay-backdrop {
-  pointer-events: none;
-}
-
-/* Backdrop cliquable UNIQUEMENT quand overlay actif */
-.radar-overlay.active .overlay-backdrop,
-.day-overlay.active .overlay-backdrop,
-.search-overlay.active .overlay-backdrop {
-  pointer-events: auto;
-}
-/* Overlay complètement neutralisé si non actif */
-.radar-overlay,
-.day-overlay,
-.search-overlay {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Overlay actif = visible + cliquable */
-.radar-overlay.active,
-.day-overlay.active,
-.search-overlay.active {
-  visibility: visible;
-  pointer-events: auto;
+body.weather-rain #rain-canvas {
+  display: block;
 }
