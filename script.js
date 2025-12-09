@@ -2117,22 +2117,17 @@ function createRainDrops(intensity) {
   const rect = rainCanvas.getBoundingClientRect();
   const width = rect.width || window.innerWidth;
   const height = rect.height || window.innerHeight;
-  const area = width * height;
-  const areaFactor = Math.min(2, Math.max(0.6, area / (1280 * 720)));
 
-  const base = 80;
-  const extra = 160;
-  let count = Math.floor((base + extra * (intensity || 1)) * areaFactor);
-  count = Math.min(count, 260);
+  const count = Math.min(220, Math.floor(100 + intensity * 160));
 
   for (let i = 0; i < count; i++) {
     rainDrops.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      len: 0.5 + Math.random() * 0.9,
-      speed: 40 + Math.random() * 40,
+      len: Math.random(),
+      speed: 55 + Math.random() * 55,   // ✅ très rapide
       thickness: 0.6 + Math.random() * 0.5,
-      alpha: 0.22 + Math.random() * 0.22,
+      alpha: 0.25 + Math.random() * 0.25
     });
   }
 }
@@ -2165,40 +2160,31 @@ function animateRain() {
   const viewH = h / dpr;
 
   rainCtx.clearRect(0, 0, w, h);
-  rainCtx.save();
 
-  rainCtx.filter = "none";
-
-  const angle = Math.atan2(rainVY, rainVX || 0.0001);
+  // angle constant, PAS de trig par goutte
+  const dx = rainVX * 0.015;
 
   for (const d of rainDrops) {
-    const dropLen = 14 + d.len * 26;
-    const dx = Math.cos(angle) * dropLen;
-    const dy = Math.sin(angle) * dropLen;
+    const len = 18 + d.len * 28;
 
     rainCtx.beginPath();
-    rainCtx.strokeStyle = "rgba(255,255,255," + d.alpha.toFixed(3) + ")";
+    rainCtx.strokeStyle = `rgba(255,255,255,${d.alpha})`;
     rainCtx.lineWidth = d.thickness;
     rainCtx.moveTo(d.x, d.y);
-    rainCtx.lineTo(d.x + dx, d.y + dy);
+    rainCtx.lineTo(d.x + dx, d.y + len);
     rainCtx.stroke();
 
-    const speed = d.speed;
-    d.x += Math.cos(angle) * speed * 0.08;
-    d.y += Math.sin(angle) * speed * 0.32;
+    // ✅ gravité PURE : on descend toujours
+    d.x += dx;
+    d.y += d.speed;
 
     if (d.y > viewH + 40) {
-      d.y = -20 - Math.random() * 40;
-      d.x = Math.random() * viewW;
-    } else if (d.x < -40 || d.x > viewW + 40) {
+      d.y = -40 - Math.random() * 60;
       d.x = Math.random() * viewW;
     }
   }
 
-  rainCtx.restore();
-  if (rainRunning) {
-    requestAnimationFrame(animateRain);
-  }
+  if (rainRunning) requestAnimationFrame(animateRain);
 }
 
 
@@ -2211,7 +2197,6 @@ function applyRainFX(j) {
 
   const c = j.current;
   const rainAmt = (c.rain ?? c.precipitation ?? 0);
-  const windDir = c.wind_direction_10m ?? 0;
   const windSpeed = c.wind_speed_10m ?? 0;
 
   if (rainAmt <= 0) {
@@ -2223,15 +2208,10 @@ function applyRainFX(j) {
   document.body.classList.add("weather-rain");
   initRainScene();
 
-  const angleDeg = (windDir + 100) % 360;
-  const angleRad = (angleDeg * Math.PI) / 180;
-  const baseSpeed = 42 + windSpeed * 1.3 + rainAmt * 5.2;
+  // ✅ vent = dérive horizontale légère
+  rainVX = windSpeed * 2;
 
-  rainVX = Math.cos(angleRad) * baseSpeed;
-  const vyBase = Math.abs(Math.sin(angleRad)) * baseSpeed;
-  rainVY = vyBase * 2.1 + 40;
-
-  const intensity = Math.min(1.2, 0.4 + rainAmt / 3.2);
+  const intensity = Math.min(1.5, 0.5 + rainAmt / 2.5);
   startRain(intensity);
 }
 
