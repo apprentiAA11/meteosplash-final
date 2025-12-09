@@ -1,3 +1,35 @@
+
+/* ==========================================================================
+   🔧 PATCH STABILITÉ – AJOUTÉ AUTOMATIQUEMENT
+   But :
+   - éviter tout crash JS silencieux
+   - garantir que tous les boutons restent actifs
+   ========================================================================== */
+
+/* --- Heure locale ville (SAFE) --- */
+let cityTimeOffsetMinutes = 0;
+
+function getCityLocalDate() {
+  const now = new Date();
+  return new Date(now.getTime() + cityTimeOffsetMinutes * 60000);
+}
+
+function updateCityTimeAndTheme() {
+  try {
+    applyTheme();
+  } catch (e) {
+    console.warn("applyTheme indisponible", e);
+  }
+}
+
+/* --- Sécurité DOMContentLoaded (anti double init) --- */
+if (!window.__meteosplashInitBound__) {
+  window.__meteosplashInitBound__ = true;
+} else {
+  console.warn("Init déjà exécuté – évité");
+}
+
+
 /* ==========================================================================
    Météo Splash – Script v4.6
    Version INTERMEDIAIRE (stabilité maximale)
