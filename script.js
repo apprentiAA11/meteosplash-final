@@ -2264,14 +2264,15 @@ function suggestNearbyCity(currentLat, currentLon) {
 }
 
 function savePreferredCity(city) {
-  localStorage.setItem("preferredCity", JSON.stringify(city));
+  localStorage.setItem("meteosplash-preferred-city", JSON.stringify(city));
 }
 
 function loadPreferredCity() {
   try {
-    return JSON.parse(localStorage.getItem("preferredCity"));
+    return JSON.parse(localStorage.getItem("meteosplash-preferred-city"));
   } catch {
     return null;
   }
 }
+
 
