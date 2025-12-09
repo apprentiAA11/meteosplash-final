@@ -401,14 +401,16 @@ async function geolocateByIp() {
       lon: j.longitude,
       isCurrentLocation: true,
     });
-     suggestNearbyCity(lat, lon);
 
-    setGeolocateSuccess(j.city);
+    // Géolocalisation IP = ville approximative (centre de zone / FAI)
+    // C'est normal si ce n'est pas exactement ta ville.
+    setGeolocateSuccess(`${j.city} (approx.)`);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
   }
 }
+
 
 if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
@@ -2069,9 +2071,11 @@ let rainCanvas = null;
 let rainCtx = null;
 let rainDrops = [];
 let rainRunning = false;
-let rainVX = 0;
-let rainVY = Math.sin(angleRad) * baseSpeed * 4.2;
 
+// Vitesse par défaut (verticale douce)
+// Ces valeurs sont écrasées dès qu'on appelle applyRainFX()
+let rainVX = 0;
+let rainVY = 35;
 function initRainScene() {
   if (rainInitialized) return;
   const scene = document.getElementById("rain-scene");
@@ -2144,25 +2148,41 @@ function animateRain() {
 
   const w = rainCanvas.width;
   const h = rainCanvas.height;
+  const dpr = window.devicePixelRatio || 1;
 
   rainCtx.clearRect(0, 0, w, h);
   rainCtx.save();
-  rainCtx.filter = "blur(0.7px)";
+  rainCtx.filter = "blur(0.6px)";
+
+  // Angle global de la pluie selon le vent
+  const angle = Math.atan2(rainVY, rainVX || 0.0001);
 
   for (const d of rainDrops) {
+    // Longueur de goutte réaliste (12 à 30 px environ)
+    const dropLen = 12 + d.len * 18;
+    const dx = Math.cos(angle) * dropLen;
+    const dy = Math.sin(angle) * dropLen;
+
     rainCtx.beginPath();
     rainCtx.strokeStyle = "rgba(255,255,255," + d.alpha.toFixed(3) + ")";
     rainCtx.lineWidth = d.thickness;
     rainCtx.moveTo(d.x, d.y);
-    rainCtx.lineTo(d.x + rainVX * 0.3, d.y + rainVY);
+    rainCtx.lineTo(d.x + dx, d.y + dy);
     rainCtx.stroke();
 
-    d.x += rainVX * 0.02;
-    d.y += d.speed;
+    // Mouvement de la goutte (vitesse + vent)
+    d.x += Math.cos(angle) * d.speed * 0.06;
+    d.y += Math.sin(angle) * d.speed * 0.18;
 
-    if (d.y > h / window.devicePixelRatio + 40) {
-      d.y = -20;
-      d.x = Math.random() * (w / window.devicePixelRatio);
+    // Quand la goutte sort de l'écran, on la recycle en haut
+    const viewH = h / dpr;
+    const viewW = w / dpr;
+
+    if (d.y > viewH + 40) {
+      d.y = -20 - Math.random() * 60;
+      d.x = Math.random() * viewW;
+    } else if (d.x < -40 || d.x > viewW + 40) {
+      d.x = Math.random() * viewW;
     }
   }
 
