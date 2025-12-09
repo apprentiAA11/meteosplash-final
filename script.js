@@ -368,6 +368,7 @@ function setGeolocateLoading() {
 }
 
 function setGeolocateSuccess(cityName) {
+   hasValidLocation = true; // ✅ VERROU DÉFINITIF
   if (!btnGeolocate) return;
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
@@ -383,6 +384,7 @@ function setGeolocateSuccess(cityName) {
 }
 
 function setGeolocateError(message) {
+   if (hasValidLocation) return; // ✅ BLOQUE LE TOAST ROUGE
   showToast(message || "Impossible de déterminer votre position.", "error");
   setGeolocateIdle();
 }
