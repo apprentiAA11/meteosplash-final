@@ -67,6 +67,8 @@ const btnForecast7 = document.getElementById("btn-forecast-7");
 const btnForecast14 = document.getElementById("btn-forecast-14");
 
 let selectedCity = null;
+const GPS_ONLY = true;
+
 let weatherCache = {};
 let cities = [];
 let lastForecastData = null;
@@ -386,26 +388,8 @@ function setGeolocateError(message) {
 }
 
 async function geolocateByIp() {
-  try {
-    const r = await fetch("https://ipapi.co/json/");
-    const j = await r.json();
-    if (!j || !j.city || !j.latitude || !j.longitude) {
-      setGeolocateError("Impossible de récupérer votre position approximative.");
-      return;
-    }
-
-    addCity({
-      name: j.city,
-      country: j.country_name || "—",
-      lat: j.latitude,
-      lon: j.longitude,
-      isCurrentLocation: true,
-    });
-    setGeolocateSuccess(j.city);
-  } catch (err) {
-    console.error("Erreur géoloc IP", err);
-    setGeolocateError("Impossible de déterminer votre position.");
-  }
+  // GPS-ONLY MODE: IP geolocation disabled on purpose
+  setGeolocateError("Active le GPS dans les paramètres du navigateur pour une localisation précise.");
 }
 
 if (btnGeolocate) {
@@ -413,7 +397,7 @@ if (btnGeolocate) {
     setGeolocateLoading();
 
     if (!navigator.geolocation) {
-      geolocateByIp();
+      setGeolocateError("La géolocalisation GPS n'est pas disponible sur ce navigateur.");
       return;
     }
 
@@ -423,77 +407,38 @@ if (btnGeolocate) {
         const lon = pos.coords.longitude;
 
         try {
-          const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
+          const url =
+            `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
           const r = await fetch(url);
           const j = await r.json();
           const info = j?.results?.[0];
-          const cityName =
-            info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-          const countryName = info?.country || "—";
 
           addCity({
-            name: cityName,
-            country: countryName,
+            name: info?.name || "Position GPS",
+            country: info?.country || "—",
             lat,
             lon,
-            isCurrentLocation: true,
+            isCurrentLocation: true
           });
-          setGeolocateSuccess(cityName);
-        } catch (err) {
-          console.error("Erreur géocodage inverse", err);
-          geolocateByIp();
+
+          btnGeolocate.textContent = "✅ Position GPS";
+          showToast("Position GPS précise utilisée.", "success");
+        } catch (e) {
+          setGeolocateError("GPS OK mais impossible de déterminer la ville.");
         }
       },
-      async (err) => {
-        console.warn("Erreur géolocalisation navigateur", err);
-        geolocateByIp();
+      () => {
+        setGeolocateError(
+          "GPS refusé ou indisponible. Autorise la localisation pour une position précise."
+        );
       },
-      { enableHighAccuracy: true, timeout: 7000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
     );
   });
-}
-
-/* --------------------------------------------------------------------------
-   7. AJOUT / SUPPRESSION DE VILLES
--------------------------------------------------------------------------- */
-
-function addCity(ci) {
-  const existingIndex = cities.findIndex(
-    (x) =>
-      x.name === ci.name &&
-      Math.abs(x.lat - ci.lat) < 0.01 &&
-      Math.abs(x.lon - ci.lon) < 0.01
-  );
-
-  if (existingIndex !== -1) {
-    if (ci.isCurrentLocation) {
-      cities.forEach((c) => {
-        c.isCurrentLocation = false;
-      });
-      cities[existingIndex].isCurrentLocation = true;
-      saveCities();
-      renderCityList();
-      highlightCity(existingIndex);
-    }
-    loadCityWeather(cities[existingIndex]);
-    return;
-  }
-
-  if (ci.isCurrentLocation) {
-    cities.forEach((c) => {
-      c.isCurrentLocation = false;
-    });
-  }
-
-  cities.push(ci);
-  saveCities();
-  renderCityList();
-  loadCityWeather(ci);
-
-  if (ci.isCurrentLocation) {
-    const idx = cities.length - 1;
-    highlightCity(idx);
-  }
 }
 
 function removeCity(idx) {
