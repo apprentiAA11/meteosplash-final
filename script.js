@@ -67,6 +67,8 @@ const btnForecast7 = document.getElementById("btn-forecast-7");
 const btnForecast14 = document.getElementById("btn-forecast-14");
 
 let selectedCity = null;
+let isApproximateLocation = false;
+
 let weatherCache = {};
 let cities = [];
 let lastForecastData = null;
@@ -387,10 +389,13 @@ function setGeolocateError(message) {
 
 async function geolocateByIp() {
   try {
+    isApproximateLocation = true;
+
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
+
     if (!j || !j.city || !j.latitude || !j.longitude) {
-      setGeolocateError("Impossible de récupérer votre position approximative.");
+      setGeolocateError("Impossible de récupérer votre position.");
       return;
     }
 
@@ -400,10 +405,12 @@ async function geolocateByIp() {
       lat: j.latitude,
       lon: j.longitude,
       isCurrentLocation: true,
+      isApproximate: true
     });
-    setGeolocateSuccess(j.city);
+
+    setGeolocateSuccess(j.city + " (position estimée)");
+    showToast("Position approximative (IP). Active le GPS pour plus de précision.", "info");
   } catch (err) {
-    console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
   }
 }
@@ -419,6 +426,7 @@ if (btnGeolocate) {
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        isApproximateLocation = false;
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
 
@@ -559,9 +567,13 @@ function renderCityList() {
     el.dataset.index = idx;
 
     const tempVal = weatherCache[ci.name]?.current?.temperature_2m ?? "—";
-    const badge = ci.isCurrentLocation
-      ? '<span class="city-badge-location">Ma position</span>'
-      : "";
+    let badge = "";
+
+    if (ci.isCurrentLocation && ci.isApproximate) {
+      badge = '<span class="city-badge-location approx">Position estimée</span>';
+    } else if (ci.isCurrentLocation) {
+      badge = '<span class="city-badge-location">Ma position</span>';
+    }
 
     el.innerHTML = `
       <div class="city-main">
@@ -2208,102 +2220,3 @@ function updateCityTimeAndTheme() {
 
 // Update every minute
 setInterval(updateCityTimeAndTheme, 60 * 1000);
-
-
-/* ===================================================== */
-/* PLUIE RÉALISTE – Canvas                               */
-/* ===================================================== */
-
-let rainCanvas, rainCtx;
-let rainDrops = [];
-let rainRunning = false;
-
-function initRain() {
-  if (rainCanvas) return;
-
-  rainCanvas = document.createElement("canvas");
-  rainCanvas.id = "rain-canvas";
-  document.getElementById("rain-scene").appendChild(rainCanvas);
-
-  rainCtx = rainCanvas.getContext("2d");
-
-  resizeRain();
-  window.addEventListener("resize", resizeRain);
-
-  createRainDrops();
-  rainRunning = true;
-  requestAnimationFrame(animateRain);
-}
-
-function resizeRain() {
-  if (!rainCanvas) return;
-  rainCanvas.width = window.innerWidth * devicePixelRatio;
-  rainCanvas.height = window.innerHeight * devicePixelRatio;
-  rainCtx.scale(devicePixelRatio, devicePixelRatio);
-}
-
-function createRainDrops() {
-  const count = Math.min(700, Math.floor(window.innerWidth * 0.7));
-  rainDrops = [];
-
-  for (let i = 0; i < count; i++) {
-    rainDrops.push({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      len: 6 + Math.random() * 14,
-      speed: 4 + Math.random() * 6,
-      opacity: 0.15 + Math.random() * 0.25,
-      drift: -0.5 + Math.random() * 1
-    });
-  }
-}
-
-function animateRain() {
-  if (!rainRunning) return;
-
-  rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-
-  rainCtx.strokeStyle = "rgba(255,255,255,0.25)";
-  rainCtx.lineWidth = 1;
-
-  for (const d of rainDrops) {
-    rainCtx.beginPath();
-    rainCtx.globalAlpha = d.opacity;
-    rainCtx.moveTo(d.x, d.y);
-    rainCtx.lineTo(d.x + d.drift, d.y + d.len);
-    rainCtx.stroke();
-
-    d.y += d.speed;
-    d.x += d.drift;
-
-    if (d.y > window.innerHeight) {
-      d.y = -20;
-      d.x = Math.random() * window.innerWidth;
-    }
-  }
-
-  requestAnimationFrame(animateRain);
-}
-
-function enableRainFX() {
-  if (!rainRunning) initRain();
-  document.getElementById("rain-scene").style.display = "block";
-}
-
-function disableRainFX() {
-  document.getElementById("rain-scene").style.display = "none";
-}
-
-const _oldApplyRainFX = window.applyRainFX;
-window.applyRainFX = function(j){
-  if (!j || !j.current) {
-    disableRainFX();
-    return;
-  }
-  const code = j.current.weather_code;
-  const isRain =
-    [51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code) ||
-    [95,96,99].includes(code);
-  if (isRain) enableRainFX();
-  else disableRainFX();
-};
