@@ -389,36 +389,21 @@ async function geolocateByIp() {
   try {
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
-
-    if (!j || j.latitude == null || j.longitude == null) {
-      setGeolocateError("Impossible de déterminer votre position.");
+    if (!j || !j.city || !j.latitude || !j.longitude) {
+      setGeolocateError("Impossible de récupérer votre position approximative.");
       return;
     }
 
-    const networkCity = {
-      name: j.city || "Position réseau",
+    addCity({
+      name: j.city,
       country: j.country_name || "—",
       lat: j.latitude,
       lon: j.longitude,
       isCurrentLocation: true,
-    };
+    });
+     suggestNearbyCity(lat, lon);
 
-    addCity(networkCity);
-    loadCityWeather(networkCity);
-
-    const preferred = loadPreferredCity();
-    if (preferred && preferred.name !== networkCity.name) {
-      showToast(
-        `Position approximative détectée. Utiliser ${preferred.name} ?`,
-        "action",
-        {
-          label: "Oui",
-          onClick: () => loadCityWeather(preferred)
-        }
-      );
-    }
-
-    setGeolocateSuccess(networkCity.name);
+    setGeolocateSuccess(j.city);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
@@ -1955,10 +1940,7 @@ function init() {
   applyTheme();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const preferred = loadPreferredCity();
-  if (preferred) selectCity(preferred);
-});
+document.addEventListener("DOMContentLoaded", init);
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
@@ -2229,7 +2211,7 @@ function updateCityTimeAndTheme() {
 // Update every minute
 setInterval(updateCityTimeAndTheme, 60 * 1000);
 function suggestNearbyCity(currentLat, currentLon) {
-  if (!Array.isArray(cities) || cities.length === 0) return;
+  if (!cities || cities.length === 0) return;
 
   function distanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -2248,55 +2230,98 @@ function suggestNearbyCity(currentLat, currentLon) {
   let minDist = Infinity;
 
   cities.forEach(c => {
-    // ⛔ ignorer la position réseau actuelle
-    if (c.isCurrentLocation) return;
-    if (c.lat == null || c.lon == null) return;
-
     const d = distanceKm(currentLat, currentLon, c.lat, c.lon);
-
     if (d < minDist) {
       minDist = d;
       closest = c;
     }
   });
 
-  if (!closest || minDist > 30) return;
-
-  showToast(
-    `Position approximative détectée. Utiliser ${closest.name} ?`,
-    "action",
-    {
-      label: "Oui",
-      onClick: () => {
-        savePreferredCity(closest); // ✅ bonne variable
-        selectCity(closest);        // ✅ bonne variable
+  if (closest && minDist < 30) {
+    showToast(
+      `Position approximative. Utiliser ${closest.name} ?`,
+      "action",
+      {
+        label: "Oui",
+        onClick: () => selectCity(closest)
       }
+    );
+  }
+}
+
+
+// =======================
+// PLUIE ULTRA RÉALISTE
+// =======================
+
+const rainCanvas = document.createElement("canvas");
+const rainCtx = rainCanvas.getContext("2d");
+rainCanvas.id = "rain-canvas";
+document.body.appendChild(rainCanvas);
+
+let rainDrops = [];
+let rainActive = false;
+
+function resizeRain() {
+  const dpr = window.devicePixelRatio || 1;
+  rainCanvas.width = window.innerWidth * dpr;
+  rainCanvas.height = window.innerHeight * dpr;
+  rainCanvas.style.width = "100%";
+  rainCanvas.style.height = "100%";
+  rainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener("resize", resizeRain);
+resizeRain();
+
+function createRain(intensity = 1) {
+  rainDrops = [];
+  const count = Math.min(600, 200 * intensity);
+
+  for (let i = 0; i < count; i++) {
+    rainDrops.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      len: 6 + Math.random() * 12,
+      speed: 4 + Math.random() * 5,
+      wind: -1 + Math.random() * 2,
+      alpha: 0.1 + Math.random() * 0.35
+    });
+  }
+}
+
+function renderRain() {
+  if (!rainActive) return;
+
+  rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+
+  for (const d of rainDrops) {
+    rainCtx.strokeStyle = `rgba(255,255,255,${d.alpha})`;
+    rainCtx.lineWidth = 1;
+    rainCtx.beginPath();
+    rainCtx.moveTo(d.x, d.y);
+    rainCtx.lineTo(d.x + d.wind * d.len, d.y + d.len);
+    rainCtx.stroke();
+
+    d.x += d.wind;
+    d.y += d.speed;
+
+    if (d.y > window.innerHeight) {
+      d.y = -20;
+      d.x = Math.random() * window.innerWidth;
     }
-  );
-}
-
-function savePreferredCity(city) {
-  localStorage.setItem("preferredCity", JSON.stringify(city));
-}
-
-function loadPreferredCity() {
-  try {
-    return JSON.parse(localStorage.getItem("preferredCity"));
-  } catch {
-    return null;
   }
+
+  requestAnimationFrame(renderRain);
 }
 
-
-function savePreferredCity(city) {
-  if (!city || city.isCurrentLocation) return;
-  localStorage.setItem("meteosplash-preferred-city", JSON.stringify(city));
+function startRain(intensity = 1) {
+  rainActive = true;
+  createRain(intensity);
+  renderRain();
 }
 
-function loadPreferredCity() {
-  try {
-    return JSON.parse(localStorage.getItem("meteosplash-preferred-city"));
-  } catch {
-    return null;
-  }
+function stopRain() {
+  rainActive = false;
+  rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
 }
