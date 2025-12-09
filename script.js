@@ -419,6 +419,7 @@ if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
     setGeolocateLoading();
 
+    // Sécurité absolue
     if (!navigator.geolocation) {
       geolocateByIp();
       return;
@@ -426,37 +427,45 @@ if (btnGeolocate) {
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        // ✅ GPS OK
         isApproximateLocation = false;
+
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
 
         try {
-          const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
+          const url =
+            `https://geocoding-api.open-meteo.com/v1/reverse?` +
+            `latitude=${lat}&longitude=${lon}&language=fr`;
+
           const r = await fetch(url);
           const j = await r.json();
           const info = j?.results?.[0];
-          const cityName =
-            info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-          const countryName = info?.country || "—";
 
           addCity({
-            name: cityName,
-            country: countryName,
+            name: info?.name || "Position GPS",
+            country: info?.country || "—",
             lat,
             lon,
             isCurrentLocation: true,
+            isApproximate: false
           });
-          setGeolocateSuccess(cityName);
-        } catch (err) {
-          console.error("Erreur géocodage inverse", err);
+
+          setGeolocateSuccess(info?.name || "Position GPS");
+        } catch (e) {
+          // 🔁 GPS OK mais reverse KO → IP
           geolocateByIp();
         }
       },
-      async (err) => {
-        console.warn("Erreur géolocalisation navigateur", err);
+      (err) => {
+        // ✅ GPS REFUSÉ / TIMEOUT → IP DIRECT
         geolocateByIp();
       },
-      { enableHighAccuracy: true, timeout: 7000 }
+      {
+        enableHighAccuracy: false,
+        timeout: 15000,   // ✅ IMPORTANT
+        maximumAge: 60000
+      }
     );
   });
 }
