@@ -390,7 +390,7 @@ async function geolocateByIp() {
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
 
-    if (!j || !j.city || j.latitude == null || j.longitude == null) {
+    if (!j || j.latitude == null || j.longitude == null) {
       setGeolocateError("Impossible de récupérer votre position approximative.");
       return;
     }
@@ -398,15 +398,33 @@ async function geolocateByIp() {
     const lat = j.latitude;
     const lon = j.longitude;
 
-    addCity({
-      name: j.city,
+    const locationCity = {
+      name: j.city || "Position réseau",
       country: j.country_name || "—",
       lat,
       lon,
       isCurrentLocation: true,
-    });
+    };
 
-    setGeolocateSuccess(j.city);
+    addCity(locationCity);
+
+    // ✅ SUGGESTION = VILLE PRÉFÉRÉE (PAS cities[])
+    const preferred = loadPreferredCity();
+    if (preferred) {
+      showToast(
+        `Position approximative détectée. Utiliser ${preferred.name} ?`,
+        "action",
+        {
+          label: "Oui",
+          onClick: () => {
+            savePreferredCity(preferred);
+            loadCityWeather(preferred);
+          }
+        }
+      );
+    }
+
+    setGeolocateSuccess(locationCity.name);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
