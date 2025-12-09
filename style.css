@@ -2276,41 +2276,19 @@ body.theme-night .forecast-toggle .pill-button-active {
 body.weather-rain #rain-canvas {
   display: block;
 }
-/* ==================================================
-   Canvas pluie – NE BLOQUE JAMAIS LES CLICS
-   ================================================== */
-#rain-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;           /* derrière l’UI */
-  pointer-events: none; /* CRUCIAL */
+
+/* ==========================================================
+   PATCH STABLE GLOBAL – Anti overlays qui bloquent les clics
+   ========================================================== */
+
+.radar-overlay:not(.active),
+.search-overlay:not(.active),
+.day-overlay:not(.active) {
+  pointer-events: none;
 }
 
-/* l’interface doit être au-dessus */
-.app-shell {
-  position: relative;
-  z-index: 2;
-}
-/* ==================================================
-   OVERLAY DÉTAIL JOUR – FIX BLOQUEUR TOTAL
-   ================================================== */
-
-.day-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;          /* ✅ MASQUÉ PAR DÉFAUT */
-  z-index: 50;
-  align-items: center;
-  justify-content: center;
-}
-
+.radar-overlay.active,
+.search-overlay.active,
 .day-overlay.active {
-  display: flex;          /* ✅ visible UNIQUEMENT quand actif */
+  pointer-events: auto;
 }
-
-.day-overlay .overlay-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(5, 5, 20, 0.55);
-}
-
