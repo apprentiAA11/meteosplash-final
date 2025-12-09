@@ -373,7 +373,10 @@ function setGeolocateSuccess(cityName) {
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
   btnGeolocate.classList.add("location-success");
-  btnGeolocate.textContent = "✅ Position trouvée";
+  btnGeolocate.textContent = isApproximateLocation
+  ? "📍 Position estimée"
+  : "✅ Position GPS";
+
   if (cityName) {
     showToast(`Position détectée : ${cityName}`, "success");
   }
