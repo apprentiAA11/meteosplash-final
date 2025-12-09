@@ -1944,9 +1944,28 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadSavedCities();
+
   const preferred = loadPreferredCity();
-  if (preferred) selectCity(preferred);
+  if (preferred) {
+    // on l’injecte explicitement dans cities
+    const exists = cities.some(
+      c => Math.abs(c.lat - preferred.lat) < 0.01 &&
+           Math.abs(c.lon - preferred.lon) < 0.01
+    );
+
+    if (!exists) {
+      cities.push(preferred);
+      saveCities();
+      renderCityList();
+    }
+
+    loadCityWeather(preferred);
+  }
+
+  applyTheme();
 });
+
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
