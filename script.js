@@ -2063,7 +2063,14 @@ if (btnHistory) {
 /* ===========================================================
    PLUIE REALISTE – INITIALISATION & CONTROLE
    =========================================================== */
+
 let rainInitialized = false;
+let rainCanvas = null;
+let rainCtx = null;
+let rainDrops = [];
+let rainRunning = false;
+let rainVX = 0;
+let rainVY = Math.sin(angleRad) * baseSpeed * 4.2;
 
 function initRainScene() {
   if (rainInitialized) return;
@@ -2071,52 +2078,130 @@ function initRainScene() {
   if (!scene) return;
   rainInitialized = true;
 
-  const COUNT = 160;
-  for (let i = 0; i < COUNT; i++) {
-    const d = document.createElement("div");
-    d.className = "raindrop";
-    d.style.left = Math.random() * 100 + "%";
-    d.style.animationDuration = (0.6 + Math.random() * 0.9) + "s";
-    d.style.animationDelay = (Math.random() * 1.2) + "s";
-    d.style.opacity = 0.35 + Math.random() * 0.6;
-    d.style.height = (10 + Math.random() * 22) + "px";
-    scene.appendChild(d);
+  rainCanvas = document.createElement("canvas");
+  rainCanvas.id = "rain-canvas";
+  rainCanvas.style.position = "absolute";
+  rainCanvas.style.inset = "0";
+  rainCanvas.style.width = "100%";
+  rainCanvas.style.height = "100%";
+  rainCanvas.style.pointerEvents = "none";
+  scene.appendChild(rainCanvas);
+
+  rainCtx = rainCanvas.getContext("2d");
+  resizeRainCanvas();
+  window.addEventListener("resize", resizeRainCanvas);
+}
+
+function resizeRainCanvas() {
+  if (!rainCanvas || !rainCtx) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = rainCanvas.getBoundingClientRect();
+  rainCanvas.width = rect.width * dpr;
+  rainCanvas.height = rect.height * dpr;
+  rainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function createRainDrops(intensity) {
+  if (!rainCanvas) return;
+  rainDrops = [];
+  const base = 220;
+  const count = Math.floor(base + intensity * 380);
+  const w = rainCanvas.clientWidth || window.innerWidth;
+  const h = rainCanvas.clientHeight || window.innerHeight;
+
+  for (let i = 0; i < count; i++) {
+    const len = 0.4 + Math.random() * 0.8;
+    rainDrops.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      len,
+      speed: 28 + Math.random() * 22,
+      thickness: 0.7 + Math.random() * 0.8,
+      alpha: 0.15 + Math.random() * 0.35
+    });
   }
 }
 
+function startRain(intensity) {
+  if (!rainCanvas || !rainCtx) initRainScene();
+  if (!rainCanvas || !rainCtx) return;
+  createRainDrops(intensity);
+  if (!rainRunning) {
+    rainRunning = true;
+    requestAnimationFrame(animateRain);
+  }
+}
+
+function stopRain() {
+  rainRunning = false;
+  if (rainCtx && rainCanvas) {
+    rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+  }
+}
+
+function animateRain() {
+  if (!rainRunning || !rainCtx || !rainCanvas) return;
+
+  const w = rainCanvas.width;
+  const h = rainCanvas.height;
+
+  rainCtx.clearRect(0, 0, w, h);
+  rainCtx.save();
+  rainCtx.filter = "blur(0.7px)";
+
+  for (const d of rainDrops) {
+    rainCtx.beginPath();
+    rainCtx.strokeStyle = "rgba(255,255,255," + d.alpha.toFixed(3) + ")";
+    rainCtx.lineWidth = d.thickness;
+    rainCtx.moveTo(d.x, d.y);
+    rainCtx.lineTo(d.x + rainVX * 0.3, d.y + rainVY);
+    rainCtx.stroke();
+
+    d.x += rainVX * 0.02;
+    d.y += d.speed;
+
+    if (d.y > h / window.devicePixelRatio + 40) {
+      d.y = -20;
+      d.x = Math.random() * (w / window.devicePixelRatio);
+    }
+  }
+
+  rainCtx.restore();
+  requestAnimationFrame(animateRain);
+}
+
 function applyRainFX(j) {
-  if (!j || !j.current) return;
+  if (!j || !j.current) {
+    document.body.classList.remove("weather-rain");
+    stopRain();
+    return;
+  }
 
   const c = j.current;
   const rainAmt = c.precipitation ?? 0;
   const windDir = c.wind_direction_10m ?? 0;
   const windSpeed = c.wind_speed_10m ?? 0;
 
-  // On force le mode rain dès qu'il y a la moindre précipitation
   if (rainAmt > 0) {
     document.body.classList.add("weather-rain");
   } else {
     document.body.classList.remove("weather-rain");
+    stopRain();
+    return;
   }
-
-  if (rainAmt <= 0) return;
 
   initRainScene();
 
-  // Angle orienté selon le vent
-  const angle = (windDir + 100) % 360;
-  document.body.style.setProperty("--rain-angle", angle + "deg");
+  const angleDeg = (windDir + 100) % 360;
+  const angleRad = (angleDeg * Math.PI) / 180;
 
-  // Drift horizontal basé sur la vitesse du vent
-  const driftPx = Math.min(140, 40 + windSpeed * 2);
-  document.body.style.setProperty("--rain-drift", driftPx + "px");
+  const baseSpeed = 40 + windSpeed * 1.2 + rainAmt * 6;
+  rainVX = Math.cos(angleRad) * baseSpeed;
+  rainVY = Math.sin(angleRad) * baseSpeed * 4.2;
 
-  // Densité visuelle en fonction de la quantité de pluie
-  const dens = Math.min(1, rainAmt / 3);
-  document.body.style.setProperty("--rain-density", dens);
+  const intensity = Math.min(1.4, 0.25 + rainAmt / 3);
+  startRain(intensity);
 }
-
-
 function updateRadarClock(isoTime, timezone) {
   const el = document.getElementById("radar-clock");
   if (!el || !isoTime) return;
@@ -2247,95 +2332,4 @@ function suggestNearbyCity(currentLat, currentLon) {
       }
     );
   }
-}
-
-
-// =======================
-// PLUIE ULTRA RÉALISTE
-// =======================
-
-const rainCanvas = document.createElement("canvas");
-const rainCtx = rainCanvas.getContext("2d");
-rainCanvas.id = "rain-canvas";
-document.body.appendChild(rainCanvas);
-
-let rainDrops = [];
-let rainActive = false;
-
-function resizeRain() {
-  const dpr = window.devicePixelRatio || 1;
-  rainCanvas.width = window.innerWidth * dpr;
-  rainCanvas.height = window.innerHeight * dpr;
-  rainCanvas.style.width = "100%";
-  rainCanvas.style.height = "100%";
-  rainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // ✅ ICI — FLUO BLUR (anti "bâtons")
-  rainCtx.filter = "blur(0.6px)";
-}
-
-window.addEventListener("resize", resizeRain);
-resizeRain();
-
-function createRain(intensity = 1) {
-  rainDrops = [];
-  const count = Math.min(600, 200 * intensity);
-
-  for (let i = 0; i < count; i++) {
-    rainDrops.push({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      len: 6 + Math.random() * 12,
-      speed: 4 + Math.random() * 5,
-      wind: -1 + Math.random() * 2,
-      alpha: 0.1 + Math.random() * 0.35
-    });
-  }
-}
-
-function renderRain() {
-  if (!rainActive) return;
-
-  rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-
-  for (const d of rainDrops) {
-    const grad = rainCtx.createLinearGradient(
-      d.x,
-      d.y,
-      d.x + d.wind * d.len,
-      d.y + d.len
-    );
-
-    grad.addColorStop(0, `rgba(255,255,255,0.0)`);
-    grad.addColorStop(0.4, `rgba(255,255,255,${d.alpha * 0.4})`);
-    grad.addColorStop(1, `rgba(255,255,255,${d.alpha})`);
-
-    rainCtx.strokeStyle = grad;
-    rainCtx.lineWidth = 1;
-    rainCtx.beginPath();
-    rainCtx.moveTo(d.x, d.y);
-    rainCtx.lineTo(d.x + d.wind * d.len, d.y + d.len);
-    rainCtx.stroke();
-
-    d.x += d.wind * 0.6;
-    d.y += d.speed;
-
-    if (d.y > window.innerHeight) {
-      d.y = -20;
-      d.x = Math.random() * window.innerWidth;
-    }
-  }
-
-  requestAnimationFrame(renderRain);
-}
-
-
-function startRain(intensity = 1) {
-  rainActive = true;
-  createRain(intensity);
-  renderRain();
-}
-
-function stopRain() {
-  rainActive = false;
-  rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
 }
