@@ -2192,13 +2192,3 @@ body.theme-night .radar-clock{
   white-space:nowrap;
 }
 .f-icon:hover::after{ opacity:1; }
-
-
-/* ===================================================== */
-/* GPS ONLY MESSAGE                                      */
-/* ===================================================== */
-.gps-only-note {
-  margin-top: 8px;
-  font-size: 0.8rem;
-  color: #ff5c5c;
-}
