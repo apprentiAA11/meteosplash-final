@@ -2249,7 +2249,9 @@ function suggestNearbyCity(currentLat, currentLon) {
       "action",
       {
         label: "Oui",
-        onClick: () => selectCity(closest)
+        onClick: () => {
+        savePreferredCity(city);   // ✅ POINT 4 ICI
+        selectCity(city);          // ✅ POINT 4 ICI
       }
     );
   }
