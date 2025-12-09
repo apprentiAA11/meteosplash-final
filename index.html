@@ -14,7 +14,9 @@
 </head>
 
 <body class="theme-auto weather-clear">
-    <div class="app-shell">
+  <canvas id="rain-canvas"></canvas>
+  <div id="rain-scene" class="rain-scene"></div>
+  <div class="app-shell">
 
     <!-- =================== HEADER =================== -->
     <header class="app-header glass-card">
@@ -234,30 +236,6 @@
     <canvas id="chart-humidity" class="day-graph"></canvas>
   </div>
 </div>
-  <!-- DEBUG souris : À SUPPRIMER APRÈS -->
-  <script>
-    document.addEventListener("mousemove", e => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (el) console.log(el);
-    });
-  </script>
-</body>
-</html>
-<script>
-  /* 🔥 DEBUG CLICK ABSOLU : FORCE TOUT A ETRE CLIQUABLE */
-  const style = document.createElement("style");
-  style.innerHTML = `
-    * {
-      pointer-events: auto !important;
-      cursor: pointer !important;
-    }
-  `;
-  document.head.appendChild(style);
-
-  document.body.addEventListener("click", e => {
-    console.log("✅ CLICK SUR :", e.target);
-  });
-</script>
 
 </body>
 </html>
