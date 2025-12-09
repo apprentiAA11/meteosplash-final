@@ -644,13 +644,14 @@ async function loadCityWeather(ci) {
 
   try {
     const url =
-      "https://api.open-meteo.com/v1/forecast" +
-      `?latitude=${ci.lat}&longitude=${ci.lon}` +
-      "&current=temperature_2m,relative_humidity_2m,precipitation,rain,showers,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code" +
-      "&hourly=temperature_2m,precipitation,rain,relative_humidity_2m,cloud_cover,wind_speed_10m,wind_gusts_10m,weather_code" +
-      "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max" +
-      "&forecast_days=14" +
-      "&timezone=auto";
+      const url = `https://api.open-meteo.com/v1/forecast
+?latitude=${lat}
+&longitude=${lon}
+&current=temperature_2m,relative_humidity_2m,wind_speed_10m
+&daily=temperature_2m_max,temperature_2m_min,precipitation_sum
+&forecast_days=14
+&timezone=auto`.replace(/\s+/g, "");
+
 
     const r = await fetch(url);
     const j = await r.json();
