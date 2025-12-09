@@ -373,7 +373,8 @@ function setGeolocateSuccess(cityName) {
   btnGeolocate.classList.add("location-success");
   btnGeolocate.textContent = "✅ Position trouvée";
   if (cityName) {
-    showToast(`Position détectée : ${cityName}`, "success");
+   hideToast(); // ✅ IMPORTANT
+   showToast(`Position détectée : ${cityName}`, "success");
   }
   setTimeout(() => {
     setGeolocateIdle();
@@ -394,14 +395,20 @@ async function geolocateByIp() {
       return;
     }
 
+    const lat = j.latitude;
+    const lon = j.longitude;
+
     addCity({
       name: j.city,
       country: j.country_name || "—",
-      lat: j.latitude,
-      lon: j.longitude,
+      lat,
+      lon,
       isCurrentLocation: true,
     });
-     suggestNearbyCity(lat, lon);
+
+    hideToast(); // ✅ efface tout message d’erreur précédent
+
+    suggestNearbyCity(lat, lon); // ✅ maintenant OK
 
     setGeolocateSuccess(j.city);
   } catch (err) {
@@ -409,6 +416,7 @@ async function geolocateByIp() {
     setGeolocateError("Impossible de déterminer votre position.");
   }
 }
+
 
 if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
