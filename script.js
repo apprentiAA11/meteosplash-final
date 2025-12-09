@@ -161,8 +161,8 @@ function applyWeatherBackground(code) {
     return;
   }
 
-  const hour = new Date().getHours();
-  const baseTheme = hour >= 21 || hour < 7 ? "theme-night" : "theme-day";
+  const hour = getCityLocalDate().getHours();
+  const baseTheme = hour >= 18 || hour < 7 ? "theme-night" : "theme-day";
 
   body.className = `${baseTheme} ${cls}`;
 }
@@ -175,8 +175,8 @@ function applyTheme() {
   const body = document.body;
 
   if (themeMode === "auto") {
-    const hour = new Date().getHours();
-    const baseTheme = hour >= 21 || hour < 7 ? "theme-night" : "theme-day";
+    const hour = getCityLocalDate().getHours();
+    const baseTheme = hour >= 18 || hour < 7 ? "theme-night" : "theme-day";
 
     if (
       !body.classList.contains("weather-clear") &&
@@ -380,11 +380,10 @@ function setGeolocateSuccess(cityName) {
   }, 1200);
 }
 
-function setGeolocateError() {
+function setGeolocateError(message) {
+  showToast(message || "Impossible de déterminer votre position.", "error");
   setGeolocateIdle();
 }
-
-
 
 async function geolocateByIp() {
   try {
@@ -624,16 +623,11 @@ async function loadCityWeather(ci) {
     const r = await fetch(url);
     const j = await r.json();
 
-    if (!j || !j.current || j.current.temperature_2m === undefined) {
-      console.warn("Météo partielle", j);
-      return;
-    }
-
     weatherCache[ci.name] = j;
 
     renderCurrent(j);
     renderWind(j);
-    
+    applyRainFX(j);
     renderForecast(j);
     activateForecastClicks();
     applyWeatherBackground(j.current.weather_code);
@@ -641,14 +635,13 @@ async function loadCityWeather(ci) {
     updateTip(j);
     // --- Timezone logic ---
     if (j.utc_offset_seconds !== undefined) {
-  cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
-}
-updateRadarClock();
-updateRadarClock();
+      cityTimeOffsetMinutes = j.utc_offset_seconds / 60;
+      updateCityTimeAndTheme();
+    }
 
   } catch (err) {
     console.error("Erreur météo", err);
-    
+    alert("Impossible de récupérer la météo.");
   }
 }
 
@@ -2076,7 +2069,18 @@ function initRainScene() {
   }
 }
 
-else {
+function applyRainFX(j) {
+  if (!j || !j.current) return;
+
+  const c = j.current;
+  const rainAmt = c.precipitation ?? 0;
+  const windDir = c.wind_direction_10m ?? 0;
+  const windSpeed = c.wind_speed_10m ?? 0;
+
+  // On force le mode rain dès qu'il y a la moindre précipitation
+  if (rainAmt > 0) {
+    document.body.classList.add("weather-rain");
+  } else {
     document.body.classList.remove("weather-rain");
   }
 
@@ -2098,31 +2102,15 @@ else {
 }
 
 
-// =================== HEURE LOCALE FIABLE ===================
-let cityTimeZone = null;
-
-function updateRadarClock() {
+function updateRadarClock(isoTime, timezone) {
   const el = document.getElementById("radar-clock");
-  if (!el || !cityTimeZone) return;
-
-  const now = new Date();
-  const formatted = new Intl.DateTimeFormat("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: cityTimeZone
-  }).format(now);
-
-  el.textContent = formatted;
+  if (!el || !isoTime) return;
+  try {
+    const d = new Date(isoTime);
+    const opts = { hour: '2-digit', minute: '2-digit', timeZone: timezone || 'UTC' };
+    el.textContent = new Intl.DateTimeFormat('fr-FR', opts).format(d);
+  } catch(e) {}
 }
-if (j.timezone) {
-  cityTimeZone = j.timezone;
-  updateRadarClock();
-}
-
-// appel toutes les minutes
-setInterval(updateRadarClock, 60_000);
-
 
 
 
@@ -2183,63 +2171,104 @@ function startRadarClockSafe(timezone) {
    Heure locale + thème auto basé sur la ville sélectionnée
 -------------------------------------------------------------------------- */
 
+
 let cityTimeOffsetMinutes = null;
 
+/**
+ * Renvoie un objet Date correspondant à l'heure locale de la ville sélectionnée.
+ * Si aucun décalage n'est connu, on retourne simplement l'heure locale du navigateur.
+ */
+function getCityLocalDate() {
+  if (cityTimeOffsetMinutes === null) {
+    return new Date();
+  }
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utcMs + cityTimeOffsetMinutes * 60000);
+}
+
+/**
+ * Met à jour l'horloge dans le header et ajuste le thème jour/nuit en mode AUTO
+ * en fonction de l'heure locale de la ville.
+ */
 function updateCityTimeAndTheme() {
   const radarClock = document.getElementById("radar-clock");
-  if (!radarClock || cityTimeOffsetMinutes === null) return;
+  const cityDate = getCityLocalDate();
 
-  const nowUTC = new Date();
-  const cityDate = new Date(nowUTC.getTime() + cityTimeOffsetMinutes * 60000);
-
-  const h = String(cityDate.getHours()).padStart(2, "0");
-  const m = String(cityDate.getMinutes()).padStart(2, "0");
-  radarClock.textContent = `${h}:${m}`;
+  if (radarClock) {
+    const h = String(cityDate.getHours()).padStart(2, "0");
+    const m = String(cityDate.getMinutes()).padStart(2, "0");
+    radarClock.textContent = `${h}:${m}`;
+  }
 
   if (themeMode === "auto") {
     const hour = cityDate.getHours();
-    const baseTheme = hour >= 7 && hour < 21 ? "theme-day" : "theme-night";
-
+    // Nuit à partir de 18h jusque 7h (inclus)
+    const baseTheme = hour >= 18 || hour < 7 ? "theme-night" : "theme-day";
     document.body.classList.remove("theme-day", "theme-night");
     document.body.classList.add(baseTheme);
   }
 }
 
-// Update every minute
+// Mise à jour toutes les minutes
 setInterval(updateCityTimeAndTheme, 60 * 1000);
 
 
-/* ================= PLUIE REALISTE PRO ================= */
-function applyRainFX(j) {
-  const scene = document.getElementById("rain-scene");
-  if (!scene) return;
+/* =====================
+   Canvas rain engine
+   ===================== */
+const rainCanvas = document.getElementById("rain-canvas");
+const rainCtx = rainCanvas.getContext("2d");
 
-  scene.innerHTML = "";
+let rainW, rainH;
+function resizeRain() {
+  rainW = rainCanvas.width = window.innerWidth;
+  rainH = rainCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeRain);
+resizeRain();
 
-  const rain = j.current?.rain ?? 0;
-  const windDir = j.current?.wind_direction_10m ?? 180;
-  const windSpeed = j.current?.wind_speed_10m ?? 0;
+const rainDrops = [];
+const RAIN_COUNT = 420;
 
-  if (rain < 0.1) return;
+const RAIN_COUNT = 460;
 
-  const drops = Math.min(260, 60 + rain * 35);
-  const angle = (windDir - 180) * (windSpeed / 40);
-  const dxBase = Math.max(-30, Math.min(30, angle));
+for (let i = 0; i < RAIN_COUNT; i++) {
+  rainDrops.push({
+    x: Math.random() * rainW,
+    y: Math.random() * rainH,
+    vx: Math.random() * 0.12 - 0.06,
+    vy: Math.random() * 0.85 + 0.55,   // 👈 vitesse contrôlée
+    alpha: Math.random() * 0.28 + 0.18, // 👈 plus diffus
+    len: Math.random() * 1.6 + 0.6      // 👈 PLUS COURT
+  });
+}
 
-  for (let i = 0; i < drops; i++) {
-    const drop = document.createElement("div");
-    drop.className = "rain-drop";
+function drawRain() {
+  rainCtx.clearRect(0, 0, rainW, rainH);
 
-    const depth = Math.random();
-    const size = 1 + depth * 1.5;
+  for (const d of rainDrops) {
+    rainCtx.strokeStyle = `rgba(255,255,255,${d.alpha})`;
+rainCtx.lineWidth = 0.6;  // 👈 capital
+rainCtx.beginPath();
+rainCtx.moveTo(d.x, d.y);
+rainCtx.lineTo(
+  d.x + d.vx * d.len * 0.6,
+  d.y + d.len
+);
+rainCtx.stroke();
 
-    drop.style.left = Math.random() * 100 + "vw";
-    drop.style.width = size + "px";
-    drop.style.height = size + "px";
-    drop.style.opacity = 0.25 + depth * 0.6;
-    drop.style.setProperty("--dx", `${dxBase * (0.5 + depth)}vw`);
-    drop.style.animationDuration = 1.2 - depth * 0.6 + "s";
+    d.x += d.vx;
+    d.y += d.vy;
 
-    scene.appendChild(drop);
+    if (d.y > rainH || d.x < -20 || d.x > rainW + 20) {
+      d.y = -5;
+      d.x = Math.random() * rainW;
+    }
+  }
+
+  if (document.body.classList.contains("weather-rain")) {
+    requestAnimationFrame(drawRain);
   }
 }
+requestAnimationFrame(drawRain);
