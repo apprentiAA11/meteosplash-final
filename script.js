@@ -406,15 +406,12 @@ async function geolocateByIp() {
       isCurrentLocation: true,
     });
 
-    // Pas de suggestNearbyCity ici tant qu'on ne l'a pas codée proprement
-
     setGeolocateSuccess(j.city);
   } catch (err) {
     console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
   }
 }
-
 
 if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
