@@ -2291,4 +2291,26 @@ body.weather-rain #rain-canvas {
   position: relative;
   z-index: 2;
 }
+/* ==================================================
+   OVERLAY DÉTAIL JOUR – FIX BLOQUEUR TOTAL
+   ================================================== */
+
+.day-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;          /* ✅ MASQUÉ PAR DÉFAUT */
+  z-index: 40;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-overlay.active {
+  display: flex;          /* ✅ visible UNIQUEMENT quand actif */
+}
+
+.day-overlay .overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 20, 0.55);
+}
 
