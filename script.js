@@ -6,7 +6,6 @@
 /* --------------------------------------------------------------------------
    1. SELECTEURS + ÉTATS GLOBAUX
 --------------------------------------------------------------------------- */
-let hasValidLocation = false;
 
 const cityInput = document.getElementById("city-input");
 const autocompleteList = document.getElementById("autocomplete-list");
@@ -204,21 +203,6 @@ function applyTheme() {
   }
 }
 
-if (btnThemeToggle) {
-  btnThemeToggle.addEventListener("click", () => {
-    if (themeMode === "auto") {
-      themeMode = "day";
-      btnThemeToggle.textContent = "☀ Jour";
-    } else if (themeMode === "day") {
-      themeMode = "night";
-      btnThemeToggle.textContent = "🌙 Nuit";
-    } else if (themeMode === "night") {
-      themeMode = "auto";
-      btnThemeToggle.textContent = "🌓 Auto";
-    }
-    applyTheme();
-  });
-}
 
 /* --------------------------------------------------------------------------
    5. AUTO-COMPLÉTION VILLES (API geocoding)
@@ -368,15 +352,13 @@ function setGeolocateLoading() {
 }
 
 function setGeolocateSuccess(cityName) {
-   hasValidLocation = true; // ✅ VERROU DÉFINITIF
   if (!btnGeolocate) return;
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
   btnGeolocate.classList.add("location-success");
   btnGeolocate.textContent = "✅ Position trouvée";
   if (cityName) {
-   hideToast(); // ✅ IMPORTANT
-   showToast(`Position détectée : ${cityName}`, "success");
+    showToast(`Position détectée : ${cityName}`, "success");
   }
   setTimeout(() => {
     setGeolocateIdle();
@@ -384,7 +366,6 @@ function setGeolocateSuccess(cityName) {
 }
 
 function setGeolocateError(message) {
-   if (hasValidLocation) return; // ✅ BLOQUE LE TOAST ROUGE
   showToast(message || "Impossible de déterminer votre position.", "error");
   setGeolocateIdle();
 }
@@ -398,20 +379,14 @@ async function geolocateByIp() {
       return;
     }
 
-    const lat = j.latitude;
-    const lon = j.longitude;
-
     addCity({
       name: j.city,
       country: j.country_name || "—",
-      lat,
-      lon,
+      lat: j.latitude,
+      lon: j.longitude,
       isCurrentLocation: true,
     });
-
-    hideToast(); // ✅ efface tout message d’erreur précédent
-
-    suggestNearbyCity(lat, lon); // ✅ maintenant OK
+     suggestNearbyCity(lat, lon);
 
     setGeolocateSuccess(j.city);
   } catch (err) {
@@ -420,51 +395,6 @@ async function geolocateByIp() {
   }
 }
 
-
-if (btnGeolocate) {
-  btnGeolocate.addEventListener("click", () => {
-    setGeolocateLoading();
-
-    if (!navigator.geolocation) {
-      geolocateByIp();
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        try {
-          const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
-          const r = await fetch(url);
-          const j = await r.json();
-          const info = j?.results?.[0];
-          const cityName =
-            info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-          const countryName = info?.country || "—";
-
-          addCity({
-            name: cityName,
-            country: countryName,
-            lat,
-            lon,
-            isCurrentLocation: true,
-          });
-          setGeolocateSuccess(cityName);
-        } catch (err) {
-          console.error("Erreur géocodage inverse", err);
-          geolocateByIp();
-        }
-      },
-      async (err) => {
-        console.warn("Erreur géolocalisation navigateur", err);
-        geolocateByIp();
-      },
-      { enableHighAccuracy: true, timeout: 7000 }
-    );
-  });
-}
 
 /* --------------------------------------------------------------------------
    7. AJOUT / SUPPRESSION DE VILLES
@@ -1251,32 +1181,6 @@ function drawSimpleLineChart(canvas, labels, values, unit) {
    15. MÉTÉO PARLÉE
 -------------------------------------------------------------------------- */
 
-if (btnSpeak) {
-  btnSpeak.addEventListener("click", () => {
-    if (!selectedCity) {
-      speech("Aucune ville n'est sélectionnée pour la météo parlée.");
-      return;
-    }
-
-    const j = weatherCache[selectedCity.name];
-    if (!j || !j.current) {
-      speech("Les données ne sont pas encore disponibles.");
-      return;
-    }
-
-    const c = j.current;
-
-    const text = `
-    Voici la météo pour ${selectedCity.name} :
-    Température actuelle ${c.temperature_2m} degrés.
-    Humidité ${Math.min(100, c.relative_humidity_2m)} pour cent.
-    Vent ${c.wind_speed_10m} kilomètres par heure,
-    direction ${degreeToCardinal(c.wind_direction_10m)}.
-  `;
-
-    speech(text);
-  });
-}
 
 function speech(txt) {
   const synth = window.speechSynthesis;
@@ -1869,79 +1773,6 @@ function stopRadarTimelineAnimation() {
   }
 }
 
-/* --- Écouteurs RADAR --- */
-
-if (btnRadar && radarOverlay) {
-  btnRadar.addEventListener("click", openRadarOverlay);
-}
-
-if (btnCloseRadar) {
-  btnCloseRadar.addEventListener("click", () => {
-    radarOverlay.classList.remove("active");
-    radarOverlay.classList.add("hidden");
-    document.body.classList.remove("no-scroll");
-    stopRainviewerAnimation();
-    stopRadarTimelineAnimation();
-    if (radarFutureOverlay && radarMapInstance) {
-      radarMapInstance.removeLayer(radarFutureOverlay);
-      radarFutureOverlay = null;
-    }
-  });
-}
-
-if (radarTabRain && radarTabWind && radarTabTemp) {
-  radarTabRain.addEventListener("click", () => setRadarMode("rain"));
-  radarTabWind.addEventListener("click", () => setRadarMode("wind"));
-  radarTabTemp.addEventListener("click", () => setRadarMode("temp"));
-}
-
-if (radarTimelineSlider) {
-  radarTimelineSlider.addEventListener("input", () => {
-    renderRadarTimeline();
-  });
-}
-
-if (radarModeToggle) {
-  radarModeToggle.addEventListener("click", () => {
-    radarTemporalMode = radarTemporalMode === "real" ? "future" : "real";
-    radarModeToggle.textContent =
-      radarTemporalMode === "real" ? "Radar réel" : "Radar futur";
-
-    if (radarTemporalMode === "real" && radarVariable === "rain") {
-      stopRadarTimelineAnimation();
-      loadRainviewerMeta().then(() => {
-        startRainviewerAnimation();
-      });
-    } else {
-      stopRainviewerAnimation();
-      refreshOpenWeatherLayer();
-      resetRadarTimelineToNow();
-    }
-  });
-}
-
-if (radarPlay) {
-  radarPlay.addEventListener("click", () => {
-    if (radarTemporalMode === "real" && radarVariable === "rain") {
-      radarTemporalMode = "future";
-      radarModeToggle.textContent = "Radar futur";
-      stopRainviewerAnimation();
-      refreshOpenWeatherLayer();
-      resetRadarTimelineToNow();
-    }
-
-    if (radarTimelinePlaying) {
-      stopRadarTimelineAnimation();
-    } else {
-      startRadarTimelineAnimation();
-    }
-  });
-}
-
-if (radarSummaryButton) {
-  radarSummaryButton.addEventListener("click", summarizePastRain);
-}
-
 /* --------------------------------------------------------------------------
    17. INITIALISATION
 -------------------------------------------------------------------------- */
@@ -2124,25 +1955,23 @@ function resizeRainCanvas() {
 function createRainDrops(intensity) {
   if (!rainCanvas) return;
   rainDrops = [];
-
-  const rect = rainCanvas.getBoundingClientRect();
-  const width = rect.width || window.innerWidth;
-  const height = rect.height || window.innerHeight;
-
-  const count = Math.min(220, Math.floor(100 + intensity * 160));
+  const base = 220;
+  const count = Math.floor(base + intensity * 380);
+  const w = rainCanvas.clientWidth || window.innerWidth;
+  const h = rainCanvas.clientHeight || window.innerHeight;
 
   for (let i = 0; i < count; i++) {
+    const len = 0.4 + Math.random() * 0.8;
     rainDrops.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      len: Math.random(),
-      speed: 55 + Math.random() * 55,   // ✅ très rapide
-      thickness: 0.6 + Math.random() * 0.5,
-      alpha: 0.25 + Math.random() * 0.25
+      x: Math.random() * w,
+      y: Math.random() * h,
+      len,
+      speed: 28 + Math.random() * 22,
+      thickness: 0.7 + Math.random() * 0.8,
+      alpha: 0.15 + Math.random() * 0.35
     });
   }
 }
-
 
 function startRain(intensity) {
   if (!rainCanvas || !rainCtx) initRainScene();
@@ -2164,40 +1993,35 @@ function stopRain() {
 function animateRain() {
   if (!rainRunning || !rainCtx || !rainCanvas) return;
 
-  const dpr = window.devicePixelRatio || 1;
   const w = rainCanvas.width;
   const h = rainCanvas.height;
-  const viewW = w / dpr;
-  const viewH = h / dpr;
 
   rainCtx.clearRect(0, 0, w, h);
-
-  // angle constant, PAS de trig par goutte
-  const dx = rainVX * 0.015;
+  rainCtx.save();
+  rainCtx.filter = "blur(0.7px)";
 
   for (const d of rainDrops) {
-    const len = 18 + d.len * 28;
-
-    rainCtx.beginPath();
-    rainCtx.strokeStyle = `rgba(255,255,255,${d.alpha})`;
+    rainCtx.filter = "blur(0.4px)";
+  rainCtx.beginPath();
+    rainCtx.strokeStyle = "rgba(255,255,255," + d.alpha.toFixed(3) + ")";
     rainCtx.lineWidth = d.thickness;
     rainCtx.moveTo(d.x, d.y);
-    rainCtx.lineTo(d.x + dx, d.y + len);
+    rainCtx.lineTo(d.x + rainVX * 0.3, d.y + rainVY);
     rainCtx.stroke();
+  rainCtx.filter = "none";
 
-    // ✅ gravité PURE : on descend toujours
-    d.x += dx;
+    d.x += rainVX * 0.02;
     d.y += d.speed;
 
-    if (d.y > viewH + 40) {
-      d.y = -40 - Math.random() * 60;
-      d.x = Math.random() * viewW;
+    if (d.y > h / window.devicePixelRatio + 40) {
+      d.y = -20;
+      d.x = Math.random() * (w / window.devicePixelRatio);
     }
   }
 
-  if (rainRunning) requestAnimationFrame(animateRain);
+  rainCtx.restore();
+  requestAnimationFrame(animateRain);
 }
-
 
 function applyRainFX(j) {
   if (!j || !j.current) {
@@ -2207,25 +2031,30 @@ function applyRainFX(j) {
   }
 
   const c = j.current;
-  const rainAmt = (c.rain ?? c.precipitation ?? 0);
+  const rainAmt = c.precipitation ?? 0;
+  const windDir = c.wind_direction_10m ?? 0;
   const windSpeed = c.wind_speed_10m ?? 0;
 
-  if (rainAmt <= 0) {
+  if (rainAmt > 0) {
+    document.body.classList.add("weather-rain");
+  } else {
     document.body.classList.remove("weather-rain");
     stopRain();
     return;
   }
 
-  document.body.classList.add("weather-rain");
   initRainScene();
 
-  // ✅ vent = dérive horizontale légère
-  rainVX = windSpeed * 2;
+  const angleDeg = (windDir + 100) % 360;
+  const angleRad = (angleDeg * Math.PI) / 180;
 
-  const intensity = Math.min(1.5, 0.5 + rainAmt / 2.5);
+  const baseSpeed = 40 + windSpeed * 1.2 + rainAmt * 6;
+  rainVX = Math.cos(angleRad) * baseSpeed;
+  rainVY = Math.sin(angleRad) * baseSpeed * 4.2;
+
+  const intensity = Math.min(1.4, 0.25 + rainAmt / 3);
   startRain(intensity);
 }
-
 function updateRadarClock(isoTime, timezone) {
   const el = document.getElementById("radar-clock");
   if (!el || !isoTime) return;
@@ -2357,3 +2186,153 @@ function suggestNearbyCity(currentLat, currentLon) {
     );
   }
 }
+
+
+/* ========================================================================== 
+   17bis. HEADER BUTTONS – DOMContentLoaded BINDINGS (fix clics)
+   ========================================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  const btnThemeToggleDom = document.getElementById("btn-theme-toggle");
+  const btnGeolocateDom = document.getElementById("btn-geolocate");
+  const btnSpeakDom = document.getElementById("btn-speak");
+  const btnRadarDom = document.getElementById("btn-radar");
+  const btnCloseRadarDom = document.getElementById("btn-close-radar");
+
+  // Thème Auto / Jour / Nuit
+  if (btnThemeToggleDom) {
+    btnThemeToggleDom.addEventListener("click", () => {
+      if (themeMode === "auto") {
+        themeMode = "day";
+        btnThemeToggleDom.textContent = "☀ Jour";
+      } else if (themeMode === "day") {
+        themeMode = "night";
+        btnThemeToggleDom.textContent = "🌙 Nuit";
+      } else if (themeMode === "night") {
+        themeMode = "auto";
+        btnThemeToggleDom.textContent = "🌓 Auto";
+      }
+      applyTheme();
+    });
+  }
+
+  // Ma position
+  if (btnGeolocateDom) {
+    btnGeolocateDom.addEventListener("click", () => {
+      setGeolocateLoading();
+
+      if (!navigator.geolocation) {
+        geolocateByIp();
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          try {
+            const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
+            const r = await fetch(url);
+            const j = await r.json();
+            const info = j?.results?.[0];
+            const cityName =
+              info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+            const countryName = info?.country || "—";
+
+            addCity({
+              name: cityName,
+              country: countryName,
+              lat,
+              lon,
+              isCurrentLocation: true,
+            });
+
+            setGeolocateSuccess(cityName);
+          } catch (err) {
+            console.error("Erreur géocodage inverse", err);
+            geolocateByIp();
+          }
+        },
+        async (err) => {
+          console.warn("Erreur géolocalisation navigateur", err);
+          geolocateByIp();
+        },
+        { enableHighAccuracy: true, timeout: 7000 }
+      );
+    });
+  }
+
+  // Météo parlée
+  if (btnSpeakDom) {
+    btnSpeakDom.addEventListener("click", () => {
+      if (!selectedCity) {
+        speech("Aucune ville n'est sélectionnée pour la météo parlée.");
+        return;
+      }
+
+      const j = weatherCache[selectedCity.name];
+      if (!j || !j.current) {
+        speech("Les données ne sont pas encore disponibles.");
+        return;
+      }
+
+      const c = j.current;
+
+      const text = `
+    Voici la météo pour ${selectedCity.name} :
+    Température actuelle ${c.temperature_2m} degrés.
+    Humidité ${Math.min(100, c.relative_humidity_2m)} pour cent.
+    Vent ${c.wind_speed_10m} kilomètres par heure,
+    direction ${degreeToCardinal(c.wind_direction_10m)}.
+  `;
+
+      speech(text);
+    });
+  }
+
+  // Radar
+  if (btnRadarDom && radarOverlay) {
+    btnRadarDom.addEventListener("click", openRadarOverlay);
+  }
+
+  if (btnCloseRadarDom) {
+    btnCloseRadarDom.addEventListener("click", () => {
+      radarOverlay.classList.remove("active");
+      radarOverlay.classList.add("hidden");
+      document.body.classList.remove("no-scroll");
+      stopRainviewerAnimation();
+      stopRadarTimelineAnimation();
+      if (radarFutureOverlay && radarMapInstance) {
+        radarMapInstance.removeLayer(radarFutureOverlay);
+        radarFutureOverlay = null;
+      }
+    });
+  }
+
+  if (radarPlay) {
+    radarPlay.addEventListener("click", () => {
+      if (rainviewerPlaying) {
+        stopRainviewerAnimation();
+      } else {
+        startRainviewerAnimation();
+      }
+    });
+  }
+
+  if (radarTimelineSlider) {
+    radarTimelineSlider.addEventListener("input", (e) => {
+      const index = parseInt(e.target.value, 10);
+      updateRadarTimeline(index);
+    });
+  }
+
+  if (radarModeToggle) {
+    radarModeToggle.addEventListener("click", () => {
+      toggleRadarMode();
+    });
+  }
+
+  if (radarSummaryButton) {
+    radarSummaryButton.addEventListener("click", summarizePastRain);
+  }
+});
