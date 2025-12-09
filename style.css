@@ -2276,3 +2276,19 @@ body.theme-night .forecast-toggle .pill-button-active {
 body.weather-rain #rain-canvas {
   display: block;
 }
+/* ==================================================
+   Canvas pluie – NE BLOQUE JAMAIS LES CLICS
+   ================================================== */
+#rain-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;           /* derrière l’UI */
+  pointer-events: none; /* CRUCIAL */
+}
+
+/* l’interface doit être au-dessus */
+.app-shell {
+  position: relative;
+  z-index: 2;
+}
+
