@@ -67,8 +67,6 @@ const btnForecast7 = document.getElementById("btn-forecast-7");
 const btnForecast14 = document.getElementById("btn-forecast-14");
 
 let selectedCity = null;
-let isApproximateLocation = false;
-
 let weatherCache = {};
 let cities = [];
 let lastForecastData = null;
@@ -373,10 +371,7 @@ function setGeolocateSuccess(cityName) {
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
   btnGeolocate.classList.add("location-success");
-  btnGeolocate.textContent = isApproximateLocation
-  ? "📍 Position estimée"
-  : "✅ Position GPS";
-
+  btnGeolocate.textContent = "✅ Position trouvée";
   if (cityName) {
     showToast(`Position détectée : ${cityName}`, "success");
   }
@@ -392,13 +387,10 @@ function setGeolocateError(message) {
 
 async function geolocateByIp() {
   try {
-    isApproximateLocation = true;
-
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
-
     if (!j || !j.city || !j.latitude || !j.longitude) {
-      setGeolocateError("Impossible de récupérer votre position.");
+      setGeolocateError("Impossible de récupérer votre position approximative.");
       return;
     }
 
@@ -408,25 +400,18 @@ async function geolocateByIp() {
       lat: j.latitude,
       lon: j.longitude,
       isCurrentLocation: true,
-      isApproximate: true
     });
-
-    setGeolocateSuccess(j.city + " (position estimée)");
-    showToast("Position approximative (IP). Active le GPS pour plus de précision.", "info");
+    setGeolocateSuccess(j.city);
   } catch (err) {
+    console.error("Erreur géoloc IP", err);
     setGeolocateError("Impossible de déterminer votre position.");
   }
-}
-if (isApproximateLocation) {
-  showToast("Active le GPS pour une localisation précise.", "error");
-  return;
 }
 
 if (btnGeolocate) {
   btnGeolocate.addEventListener("click", () => {
     setGeolocateLoading();
 
-    // Sécurité absolue
     if (!navigator.geolocation) {
       geolocateByIp();
       return;
@@ -434,45 +419,36 @@ if (btnGeolocate) {
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        // ✅ GPS OK
-        isApproximateLocation = false;
-
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
 
         try {
-          const url =
-            `https://geocoding-api.open-meteo.com/v1/reverse?` +
-            `latitude=${lat}&longitude=${lon}&language=fr`;
-
+          const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
           const r = await fetch(url);
           const j = await r.json();
           const info = j?.results?.[0];
+          const cityName =
+            info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+          const countryName = info?.country || "—";
 
           addCity({
-            name: info?.name || "Position GPS",
-            country: info?.country || "—",
+            name: cityName,
+            country: countryName,
             lat,
             lon,
             isCurrentLocation: true,
-            isApproximate: false
           });
-
-          setGeolocateSuccess(info?.name || "Position GPS");
-        } catch (e) {
-          // 🔁 GPS OK mais reverse KO → IP
+          setGeolocateSuccess(cityName);
+        } catch (err) {
+          console.error("Erreur géocodage inverse", err);
           geolocateByIp();
         }
       },
-      (err) => {
-        // ✅ GPS REFUSÉ / TIMEOUT → IP DIRECT
+      async (err) => {
+        console.warn("Erreur géolocalisation navigateur", err);
         geolocateByIp();
       },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,   // ✅ IMPORTANT
-        maximumAge: 60000
-      }
+      { enableHighAccuracy: true, timeout: 7000 }
     );
   });
 }
@@ -583,13 +559,9 @@ function renderCityList() {
     el.dataset.index = idx;
 
     const tempVal = weatherCache[ci.name]?.current?.temperature_2m ?? "—";
-    let badge = "";
-
-    if (ci.isCurrentLocation && ci.isApproximate) {
-      badge = '<span class="city-badge-location approx">Position estimée</span>';
-    } else if (ci.isCurrentLocation) {
-      badge = '<span class="city-badge-location">Ma position</span>';
-    }
+    const badge = ci.isCurrentLocation
+      ? '<span class="city-badge-location">Ma position</span>'
+      : "";
 
     el.innerHTML = `
       <div class="city-main">
