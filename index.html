@@ -71,34 +71,31 @@
             <div class="radar-legend">
               <div id="legend-container" class="legend-container hidden">
   
-  <!-- Légende pluie -->
-  <div class="legend-group" data-type="rain">
-    <span class="legend-dot color-rain-1"></span> Faible
-    <span class="legend-dot color-rain-2"></span> Modérée
-    <span class="legend-dot color-rain-3"></span> Forte
-    <span class="legend-dot color-rain-4"></span> Très forte
-  </div>
+                <!-- Légende pluie -->
+                <div class="legend-group" data-type="rain">
+                  <span class="legend-dot color-rain-1"></span> Faible
+                  <span class="legend-dot color-rain-2"></span> Modérée
+                  <span class="legend-dot color-rain-3"></span> Forte
+                  <span class="legend-dot color-rain-4"></span> Très forte
+                </div>
 
-  <!-- Légende vent -->
-  <div class="legend-group hidden" data-type="wind">
-    <span class="legend-dot color-wind-1"></span> Faible
-    <span class="legend-dot color-wind-2"></span> Modéré
-    <span class="legend-dot color-wind-3"></span> Fort
-    <span class="legend-dot color-wind-4"></span> Très fort
-  </div>
+                <!-- Légende vent -->
+                <div class="legend-group hidden" data-type="wind">
+                  <span class="legend-dot color-wind-1"></span> Faible
+                  <span class="legend-dot color-wind-2"></span> Modéré
+                  <span class="legend-dot color-wind-3"></span> Fort
+                  <span class="legend-dot color-wind-4"></span> Très fort
+                </div>
 
-  <!-- Légende température -->
-  <div class="legend-group hidden" data-type="temp">
-    <span class="legend-dot color-temp-1"></span> Très froid
-    <span class="legend-dot color-temp-2"></span> Froid
-    <span class="legend-dot color-temp-3"></span> Doux
-    <span class="legend-dot color-temp-4"></span> Chaud / Très chaud
-  </div>
+                <!-- Légende température -->
+                <div class="legend-group hidden" data-type="temp">
+                  <span class="legend-dot color-temp-1"></span> Très froid
+                  <span class="legend-dot color-temp-2"></span> Froid
+                  <span class="legend-dot color-temp-3"></span> Doux
+                  <span class="legend-dot color-temp-4"></span> Chaud / Très chaud
+                </div>
 
-</div>
-
-
-              
+              </div>
             </div>
           </div>
         </div>
@@ -168,7 +165,13 @@
       <!-- Colonne droite -->
       <section class="column-right">
         <div id="add-city-panel" class="add-city-panel">
-          <input id="city-input" type="text" class="ios-search-input" placeholder="Ajouter une ville..." autocomplete="off" />
+          <input
+            id="city-input"
+            type="text"
+            class="ios-search-input"
+            placeholder="Ajouter une ville..."
+            autocomplete="off"
+          />
           <ul id="autocomplete-list" class="autocomplete-list inline-autocomplete"></ul>
         </div>
 
@@ -211,30 +214,31 @@
 
   <div id="toast" class="toast"></div>
 
-<!-- =============== OVERLAY DÉTAIL JOUR =============== -->
-<div id="day-overlay" class="day-overlay active-day-overlay">
-  <div class="overlay-backdrop"></div>
+  <!-- =============== OVERLAY DÉTAIL JOUR =============== -->
+  <!-- ⚠️ corrigé : overlay MASQUÉ au chargement (plus de "active-day-overlay") -->
+  <div id="day-overlay" class="day-overlay">
+    <div class="overlay-backdrop"></div>
 
-  <div class="day-popup glass-card">
-    <header class="popup-header">
-      <h2 id="day-overlay-title">Détail du jour</h2>
-      <button id="btn-close-day" class="icon-button close-popup">✕</button>
-    </header>
-    <p id="day-overlay-subtitle" class="day-overlay-subtitle"></p>
+    <div class="day-popup glass-card">
+      <header class="popup-header">
+        <h2 id="day-overlay-title">Détail du jour</h2>
+        <button id="btn-close-day" class="icon-button close-popup">✕</button>
+      </header>
+      <p id="day-overlay-subtitle" class="day-overlay-subtitle"></p>
 
-    <div class="day-tabs">
-      <button id="day-tab-temp" class="pill-button pill-button-active">Température</button>
-      <button id="day-tab-rain" class="pill-button">Pluie</button>
-      <button id="day-tab-wind" class="pill-button">Vent</button>
-      <button id="day-tab-humidity" class="pill-button">Humidité</button>
+      <div class="day-tabs">
+        <button id="day-tab-temp" class="pill-button pill-button-active">Température</button>
+        <button id="day-tab-rain" class="pill-button">Pluie</button>
+        <button id="day-tab-wind" class="pill-button">Vent</button>
+        <button id="day-tab-humidity" class="pill-button">Humidité</button>
+      </div>
+
+      <canvas id="chart-temp" class="day-graph active-day-graph"></canvas>
+      <canvas id="chart-rain" class="day-graph"></canvas>
+      <canvas id="chart-wind" class="day-graph"></canvas>
+      <canvas id="chart-humidity" class="day-graph"></canvas>
     </div>
-
-    <canvas id="chart-temp" class="day-graph active-day-graph"></canvas>
-    <canvas id="chart-rain" class="day-graph"></canvas>
-    <canvas id="chart-wind" class="day-graph"></canvas>
-    <canvas id="chart-humidity" class="day-graph"></canvas>
   </div>
-</div>
 
 </body>
 </html>
