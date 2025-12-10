@@ -2199,24 +2199,3 @@ body.theme-night .radar-clock{
   pointer-events: none;
   z-index: 0;
 }
-
-
-/* === CLICK SAFETY FIX (backgrounds must not capture mouse) === */
-#rain-canvas,
-canvas.weather-rain,
-.weather-rain::before,
-.weather-rain::after,
-.weather-cloudy::before,
-.weather-clear::before,
-.weather-storm::before,
-.weather-snow::after {
-  pointer-events: none !important;
-}
-
-/* ensure header & buttons stay above effects */
-.app-header,
-.header-buttons,
-.icon-button {
-  position: relative;
-  z-index: 50;
-}
