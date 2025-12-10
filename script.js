@@ -548,14 +548,16 @@ function loadSavedCities() {
     cities = JSON.parse(raw);
     renderCityList();
   }
+  updateAddCityButtonVisibility();
 }
 
 if (btnReset) {
   btnReset.addEventListener("click", () => {
-    cities = [];
-    saveCities();
-    renderCityList();
-  });
+  cities = [];
+  saveCities();
+  renderCityList();
+  updateAddCityButtonVisibility();
+});
 }
 
 /* --------------------------------------------------------------------------
@@ -608,6 +610,8 @@ function renderCityList() {
     });
 
     cityList.appendChild(el);
+    updateAddCityButtonVisibility();
+
   });
 }
 
