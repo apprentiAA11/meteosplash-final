@@ -1979,7 +1979,12 @@ function init() {
   applyTheme();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", () => {
+  if (dayOverlay) {
+    dayOverlay.classList.remove("active", "active-day-overlay");
+  }
+});
+
 
 /* --------------------------------------------------------------------------
    15. HISTORIQUE METEO (ONGLET DISCRET)
