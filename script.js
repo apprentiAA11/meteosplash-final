@@ -425,9 +425,11 @@ async function geolocateByIp() {
 
     setGeolocateSuccess(j.city);
   } catch (err) {
-    console.error("Erreur géoloc IP", err);
+  console.error("Erreur géoloc IP", err);
+  if (!hasValidLocation) {
     setGeolocateError("Impossible de déterminer votre position.");
   }
+}
 }
 
 
