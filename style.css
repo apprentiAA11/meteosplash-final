@@ -46,12 +46,19 @@ body {
 }
 
 /* Jour / nuit de base */
-body.theme-day {
-  background: var(--bg-day);
-}
 body.theme-night {
-  background: var(--bg-night);
-  color: #eef0ff;
+  background: radial-gradient(
+    circle at top,
+    #0c102a 0%,
+    #060814 70%
+  );
+}
+body.theme-day {
+  background: radial-gradient(
+    circle at top,
+    #bcd5ff 0%,
+    #6fa1ff 70%
+  );
 }
 
 /* Variantes météo */
