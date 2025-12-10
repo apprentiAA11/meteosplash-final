@@ -2375,3 +2375,119 @@ function suggestNearbyCity(currentLat, currentLon) {
     );
   }
 }
+
+/* @PATCH Prévisions 24h – ajout non destructif */
+(function(){
+  const btnAddCityHeader = document.getElementById("btn-add-city");
+  const addCityPanel = document.getElementById("add-city-panel");
+  const cityInput = document.getElementById("city-input");
+  if (btnAddCityHeader && addCityPanel && cityInput){
+    btnAddCityHeader.addEventListener("click", ()=>{
+      addCityPanel.scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>cityInput.focus(),200);
+    });
+  }
+
+  const btn24h = document.getElementById("btn-24h");
+  if (!btn24h) return;
+
+  function openNext24Hours(){
+    if (typeof lastForecastData === "undefined" || !lastForecastData || !selectedCity){
+      if (typeof showToast === "function") showToast("Ajoute d'abord une ville.", "info");
+      return;
+    }
+    if (typeof dayOverlay === "undefined") return;
+
+    const h = lastForecastData.hourly;
+    const now = new Date();
+    const end = new Date(now.getTime()+24*3600*1000);
+    const times = h.time.map(t=>new Date(t));
+
+    const hours=[], temps=[], rains=[], winds=[], humidities=[];
+    for(let i=0;i<times.length;i++){
+      if(times[i]>=now && times[i]<=end){
+        hours.push(times[i].getHours());
+        temps.push(h.temperature_2m[i]);
+        rains.push(h.precipitation[i]);
+        winds.push(h.wind_speed_10m[i]);
+        if (h.relative_humidity_2m) humidities.push(h.relative_humidity_2m[i]);
+      }
+    }
+    if(!hours.length){
+      for(let i=0;i<Math.min(24,times.length);i++){
+        hours.push(times[i].getHours());
+        temps.push(h.temperature_2m[i]);
+        rains.push(h.precipitation[i]);
+        winds.push(h.wind_speed_10m[i]);
+        if (h.relative_humidity_2m) humidities.push(h.relative_humidity_2m[i]);
+      }
+    }
+    currentDaySeries = {hours,temps,rains,winds,humidities};
+    if (typeof setActiveDayTab === "function") setActiveDayTab("temp");
+    if (typeof dayOverlayTitle!=="undefined") dayOverlayTitle.textContent = `Prochaines 24 h · ${selectedCity.name}`;
+    if (typeof dayOverlaySubtitle!=="undefined"){
+      dayOverlaySubtitle.textContent = `De ${now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})} à ${end.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`;
+    }
+    dayOverlay.classList.add("active");
+    document.body.classList.add("no-scroll");
+  }
+  btn24h.addEventListener("click", openNext24Hours);
+})();
+
+
+/* @PATCH AddCityPopup – popup réutilisant le panneau existant */
+(function(){
+  const btnAddCityHeader = document.getElementById("btn-add-city");
+  const overlay = document.getElementById("add-city-overlay");
+  const closeBtn = document.getElementById("btn-close-add-city");
+  const popupSlot = document.getElementById("add-city-popup-slot");
+  const panel = document.getElementById("add-city-panel");
+  const input = document.getElementById("city-input");
+
+  if(!btnAddCityHeader || !overlay || !panel) return;
+
+  const originalParent = panel.parentElement;
+  const originalNext = panel.nextSibling;
+
+  function openPopup(){
+    popupSlot.appendChild(panel);
+    overlay.classList.add("active");
+    document.body.classList.add("no-scroll");
+    setTimeout(()=>input && input.focus(),150);
+  }
+
+  function closePopup(){
+    if(originalNext){
+      originalParent.insertBefore(panel, originalNext);
+    } else {
+      originalParent.appendChild(panel);
+    }
+    overlay.classList.remove("active");
+    document.body.classList.remove("no-scroll");
+  }
+
+  btnAddCityHeader.addEventListener("click", openPopup);
+  closeBtn && closeBtn.addEventListener("click", closePopup);
+  overlay.querySelector(".overlay-backdrop")
+    .addEventListener("click", closePopup);
+})();
+
+
+/* @PATCH AddCityPopup AutoClose */
+(function(){
+  const overlay = document.getElementById("add-city-overlay");
+  const panel = document.getElementById("add-city-panel");
+  if(!overlay || !panel) return;
+
+  // observe clicks inside autocomplete or city list
+  panel.addEventListener("click", (e)=>{
+    const li = e.target.closest("li");
+    if(!li) return;
+
+    // delay to let existing logic finish (fetch / render)
+    setTimeout(()=>{
+      overlay.classList.remove("active");
+      document.body.classList.remove("no-scroll");
+    },150);
+  });
+})();
