@@ -2214,3 +2214,49 @@ body.theme-night .radar-clock{
 /* @PATCH AddCityPopup */
 #add-city-overlay { display:none; }
 #add-city-overlay.active { display:block; }
+
+/* ================= TIMELINE 24H ================= */
+
+.timeline-24h {
+  margin: 10px 0 14px;
+  padding: 8px 6px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.timeline-24h::-webkit-scrollbar {
+  display: none;
+}
+
+.hour-item {
+  min-width: 56px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  font-size: 0.8rem;
+}
+
+body.theme-night .hour-item {
+  background: rgba(14, 16, 44, 0.95);
+}
+
+.hour-item.current {
+  outline: 2px solid var(--accent-yellow);
+}
+
+.hour-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hour-icon {
+  font-size: 1.3rem;
+  margin: 4px 0;
+}
+
+.hour-temp {
+  font-weight: 600;
+}
