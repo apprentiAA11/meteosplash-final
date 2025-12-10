@@ -704,6 +704,40 @@ async function loadCityWeather(ci) {
     alert("Impossible de récupérer la météo.");
   }
 }
+function renderTimeline24h(j) {
+  const container = document.getElementById("timeline-24h");
+  if (!container || !j?.hourly) return;
+
+  container.innerHTML = "";
+
+  const now = new Date();
+  const times = j.hourly.time;
+  const temps = j.hourly.temperature_2m;
+  const codes = j.hourly.weather_code;
+
+  let added = 0;
+
+  for (let i = 0; i < times.length && added < 24; i++) {
+    const t = new Date(times[i]);
+    if (t < now) continue;
+
+    const item = document.createElement("div");
+    item.className = "hour-item";
+
+    if (t.getHours() === now.getHours()) {
+      item.classList.add("current");
+    }
+
+    item.innerHTML = `
+      <div class="hour-time">${t.getHours()}h</div>
+      <div class="hour-icon">${iconForWeatherCode(codes[i])}</div>
+      <div class="hour-temp">${Math.round(temps[i])}°</div>
+    `;
+
+    container.appendChild(item);
+    added++;
+  }
+}
 
 /* --------------------------------------------------------------------------
    10. AFFICHAGE METEO ACTUELLE
@@ -783,6 +817,21 @@ if (btnForecast14) {
     if (selectedCity) {
       renderForecast(weatherCache[selectedCity.name], 14);
       activateForecastClicks();
+    }
+  });
+}
+
+const btn24h = document.getElementById("btn-24h");
+const timeline24h = document.getElementById("timeline-24h");
+
+if (btn24h && timeline24h) {
+  btn24h.addEventListener("click", () => {
+    if (!lastForecastData) return;
+
+    timeline24h.classList.toggle("hidden");
+
+    if (!timeline24h.classList.contains("hidden")) {
+      renderTimeline24h(lastForecastData);
     }
   });
 }
