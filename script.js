@@ -2496,3 +2496,17 @@ function suggestNearbyCity(currentLat, currentLon) {
     },150);
   });
 })();
+function updateAddCityButtonVisibility() {
+  const btnAddCity = document.getElementById("btn-add-city");
+  if (!btnAddCity) return;
+
+  // on considère qu'une "vraie" ville ≠ position
+  const hasRealCity = cities.some(c => !c.isCurrentLocation);
+
+  if (!hasRealCity) {
+    btnAddCity.classList.add("hidden");
+  } else {
+    btnAddCity.classList.remove("hidden");
+  }
+}
+
