@@ -2,8 +2,12 @@
 /* VARIABLES GLOBALES                                                     */
 /* ====================================================================== */
 :root {
-  --bg-day: radial-gradient(circle at top, #8fc5ff 0%, #b3a2ff 30%, #ffcadc 100%);
-  --bg-night: radial-gradient(circle at top, #05051a 0%, #100b2c 40%, #05060c 100%);
+  --bg-day: linear-gradient(180deg, #cfd8ea 0%, #aebcd4 100%);
+  --bg-night: radial-gradient(
+    circle at top,
+    rgba(80, 100, 190, 0.35),
+    #060a1e 65%
+  );
   --bg-cloudy: radial-gradient(circle at top, #d0d7e8 0%, #a1b1cf 50%, #7a8bad 100%);
   --bg-rain: radial-gradient(circle at top, #506c92 0%, #28344c 60%, #111622 100%);
   --bg-snow: radial-gradient(circle at top, #e2f3ff 0%, #bfd8f0 40%, #9fbcd8 100%);
@@ -46,19 +50,13 @@ body {
 }
 
 /* Jour / nuit de base */
-body.theme-night {
-  background: radial-gradient(
-    circle at top,
-    #0c102a 0%,
-    #060814 70%
-  );
-}
 body.theme-day {
-  background: radial-gradient(
-    circle at top,
-    #bcd5ff 0%,
-    #6fa1ff 70%
-  );
+  background: var(--bg-day);
+  color: #0f172a;
+}
+body.theme-night {
+  background: var(--bg-night);
+  color: #eef0ff;
 }
 
 /* Variantes météo */
@@ -2206,3 +2204,13 @@ body.theme-night .radar-clock{
   pointer-events: none;
   z-index: 0;
 }
+
+
+/* @PATCH Prévisions 24h */
+.details-actions{display:flex;gap:6px;justify-content:flex-end}
+.add-city{background:linear-gradient(135deg,#ff6fb5,#ff9a3c);color:#1b1440}
+
+
+/* @PATCH AddCityPopup */
+#add-city-overlay { display:none; }
+#add-city-overlay.active { display:block; }
