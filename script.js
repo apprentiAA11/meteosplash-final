@@ -7,7 +7,9 @@
    1. SELECTEURS + ÉTATS GLOBAUX
 --------------------------------------------------------------------------- */
 let hasValidLocation = false;
-let cityLocalHour = null; // ✅ heure locale de la ville sélectionnée
+let cityLocalHour = null;
+let citySunriseHour = null;
+let citySunsetHour = null;
 
 const cityInput = document.getElementById("city-input");
 const autocompleteList = document.getElementById("autocomplete-list");
@@ -137,16 +139,16 @@ let themeMode = "auto"; // "auto" | "day" | "night"
 function applyWeatherBackground(code) {
   const body = document.body;
 
-  if (code === null) {
-    body.classList.remove(
-      "weather-clear",
-      "weather-cloudy",
-      "weather-rain",
-      "weather-snow",
-      "weather-storm"
-    );
-    return;
-  }
+  // Nettoyage météo
+  body.classList.remove(
+    "weather-clear",
+    "weather-cloudy",
+    "weather-rain",
+    "weather-snow",
+    "weather-storm"
+  );
+
+  if (code === null) return;
 
   let cls = "";
 
@@ -159,18 +161,11 @@ function applyWeatherBackground(code) {
   else if ([80, 81, 82].includes(code)) cls = "weather-rain";
   else if ([95, 96, 99].includes(code)) cls = "weather-storm";
 
-  if (themeMode !== "auto") {
-    return;
-  }
+  if (cls) body.classList.add(cls);
 
-  const hour =
-    typeof cityLocalHour === "number"
-      ? cityLocalHour
-      : new Date().getHours(); // fallback navigateur
-  const baseTheme = hour >= 21 || hour < 7 ? "theme-night" : "theme-day";
-
-  body.className = `${baseTheme} ${cls}`;
+  // ✅ le thème jour/nuit est géré EXCLUSIVEMENT par applyTheme()
 }
+
 
 /* --------------------------------------------------------------------------
    4. THÈME JOUR / NUIT / AUTO
@@ -180,11 +175,20 @@ function applyTheme() {
   const body = document.body;
 
   if (themeMode === "auto") {
+
     const hour =
       typeof cityLocalHour === "number"
         ? cityLocalHour
-        : new Date().getHours(); // fallback navigateur
-    const baseTheme = hour >= 21 || hour < 7 ? "theme-night" : "theme-day";
+        : new Date().getHours();
+
+    let isNight;
+    if (citySunriseHour !== null && citySunsetHour !== null) {
+      isNight = hour < citySunriseHour || hour >= citySunsetHour;
+    } else {
+      isNight = hour >= 21 || hour < 7;
+    }
+
+    const baseTheme = isNight ? "theme-night" : "theme-day";
 
     if (
       !body.classList.contains("weather-clear") &&
@@ -198,18 +202,17 @@ function applyTheme() {
       body.classList.remove("theme-day", "theme-night");
       body.classList.add(baseTheme);
     }
-  } else if (themeMode === "day") {
-    document.body.classList.remove("theme-night");
-    document.body.classList.add("theme-day");
-  } else if (themeMode === "night") {
-    document.body.classList.remove("theme-day");
-    document.body.classList.add("theme-night");
-  }
 
-  if (lastForecastData) {
-    // les prochains graphes utiliseront le bon thème
+  } else if (themeMode === "day") {
+    body.classList.remove("theme-night");
+    body.classList.add("theme-day");
+
+  } else if (themeMode === "night") {
+    body.classList.remove("theme-day");
+    body.classList.add("theme-night");
   }
 }
+
 
 if (btnThemeToggle) {
   btnThemeToggle.addEventListener("click", () => {
@@ -380,7 +383,6 @@ function setGeolocateSuccess(cityName) {
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
   btnGeolocate.classList.add("location-success");
-  // affichage temporaire puis retour bouton normal
   btnGeolocate.textContent = "✅ Position trouvée";
   if (cityName) {
    hideToast(); // ✅ IMPORTANT
@@ -392,8 +394,6 @@ function setGeolocateSuccess(cityName) {
 }
 
 function setGeolocateError(message) {
-  if (hasValidLocation) return; // ✅ évite le toast rouge parasite
-
    if (hasValidLocation) return; // ✅ BLOQUE LE TOAST ROUGE
   showToast(message || "Impossible de déterminer votre position.", "error");
   setGeolocateIdle();
@@ -442,8 +442,6 @@ if (btnGeolocate) {
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        hasValidLocation = true; // ✅ verrou immédiat anti toast fantôme
-
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
 
@@ -657,12 +655,27 @@ async function loadCityWeather(ci) {
       `?latitude=${ci.lat}&longitude=${ci.lon}` +
       "&current=temperature_2m,relative_humidity_2m,precipitation,rain,showers,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code" +
       "&hourly=temperature_2m,precipitation,rain,relative_humidity_2m,cloud_cover,wind_speed_10m,wind_gusts_10m,weather_code" +
-      "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max" +
+      "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset" +
       "&forecast_days=14" +
       "&timezone=auto";
 
     const r = await fetch(url);
     const j = await r.json();
+
+    // Lever / coucher du soleil (jour courant) – heures locales
+    if (j.daily && j.daily.sunrise && j.daily.sunset) {
+      const sr = new Date(j.daily.sunrise[0]);
+      const ss = new Date(j.daily.sunset[0]);
+      citySunriseHour = sr.getHours() + sr.getMinutes() / 60;
+      citySunsetHour  = ss.getHours() + ss.getMinutes() / 60;
+    } else {
+      citySunriseHour = null;
+      citySunsetHour = null;
+      // Lever / coucher du soleil calculés
+      applyTheme(); // ✅ recalcul auto jour / nuit SOLAIRE
+
+    }
+
 
     weatherCache[ci.name] = j;
 
@@ -677,6 +690,7 @@ async function loadCityWeather(ci) {
     // --- Timezone logic ---
     if (j.utc_offset_seconds !== undefined) {
       updateCityClockFromOffset(j.utc_offset_seconds);
+      applyTheme(); // ✅ recalcul avec heure LOCALE
     }
 
   } catch (err) {
@@ -1984,6 +1998,18 @@ async function fetchHistoricalWeather(ci, dateStr) {
 
     const r = await fetch(url);
     const j = await r.json();
+
+    // Lever / coucher du soleil (jour courant) – heures locales
+    if (j.daily && j.daily.sunrise && j.daily.sunset) {
+      const sr = new Date(j.daily.sunrise[0]);
+      const ss = new Date(j.daily.sunset[0]);
+      citySunriseHour = sr.getHours() + sr.getMinutes() / 60;
+      citySunsetHour  = ss.getHours() + ss.getMinutes() / 60;
+    } else {
+      citySunriseHour = null;
+      citySunsetHour = null;
+    }
+
     if (!j || !j.daily || !j.daily.time || !j.daily.time.length) {
       return null;
     }
@@ -2104,7 +2130,6 @@ const RAIN_WIDTH      = 0.8;
 let rainDrops = [];
 let rainRunning = false;
 let rainVX = 0;
-let rainVY = Math.sin(angleRad) * baseSpeed * 4.2;
 
 function initRainScene() {
   if (rainInitialized) return;
@@ -2309,30 +2334,9 @@ function startRadarClockSafe(timezone) {
    Heure locale + thème auto basé sur la ville sélectionnée
 -------------------------------------------------------------------------- */
 
-let cityTimeOffsetMinutes = null;
 
-function updateCityTimeAndTheme() {
-  const radarClock = document.getElementById("radar-clock");
-  if (!radarClock || cityTimeOffsetMinutes === null) return;
-
-  const nowUTC = new Date();
-  const cityDate = new Date(nowUTC.getTime() + cityTimeOffsetMinutes * 60000);
-
-  const h = String(cityDate.getHours()).padStart(2, "0");
-  const m = String(cityDate.getMinutes()).padStart(2, "0");
-  radarClock.textContent = `${h}:${m}`;
-
-  if (themeMode === "auto") {
-    const hour = cityDate.getHours();
-    const baseTheme = hour >= 7 && hour < 21 ? "theme-day" : "theme-night";
-
-    document.body.classList.remove("theme-day", "theme-night");
-    document.body.classList.add(baseTheme);
-  }
-}
 
 // Update every minute
-setInterval(updateCityTimeAndTheme, 60 * 1000);
 function suggestNearbyCity(currentLat, currentLon) {
   if (!cities || cities.length === 0) return;
 
