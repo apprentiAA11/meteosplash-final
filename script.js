@@ -211,6 +211,51 @@ function applyTheme() {
     body.classList.remove("theme-day");
     body.classList.add("theme-night");
   }
+
+function applyAmbientTheme(code) {
+  const body = document.body;
+
+  // Reset des classes d'ambiance
+  body.classList.remove(
+    "ambient-morning",
+    "ambient-day",
+    "ambient-evening",
+    "ambient-night",
+    "ambient-rain",
+    "ambient-snow",
+    "ambient-fog",
+    "ambient-storm"
+  );
+
+  const hour =
+    typeof cityLocalHour === "number"
+      ? cityLocalHour
+      : new Date().getHours();
+
+  let baseAmbient;
+  if (hour < 6 || hour >= 22) baseAmbient = "ambient-night";
+  else if (hour < 11) baseAmbient = "ambient-morning";
+  else if (hour < 18) baseAmbient = "ambient-day";
+  else baseAmbient = "ambient-evening";
+
+  if (baseAmbient) body.classList.add(baseAmbient);
+
+  if (code == null) return;
+
+  if (
+    [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)
+  ) {
+    body.classList.add("ambient-rain");
+  } else if ([71, 73, 75, 77].includes(code)) {
+    body.classList.add("ambient-snow");
+  } else if ([45, 48].includes(code)) {
+    body.classList.add("ambient-fog");
+  } else if ([95, 96, 99].includes(code)) {
+    body.classList.add("ambient-storm");
+  }
+}
+
+
 }
 
 
@@ -707,6 +752,9 @@ async function loadCityWeather(ci) {
     if (j.utc_offset_seconds !== undefined) {
       updateCityClockFromOffset(j.utc_offset_seconds);
       applyTheme(); // ✅ recalcul avec heure LOCALE
+      applyAmbientTheme(j.current && typeof j.current.weather_code === "number" ? j.current.weather_code : null);
+    } else {
+      applyAmbientTheme(j.current && typeof j.current.weather_code === "number" ? j.current.weather_code : null);
     }
 
   } catch (err) {
