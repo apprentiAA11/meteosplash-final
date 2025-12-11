@@ -689,10 +689,19 @@ async function loadCityWeather(ci) {
     renderWind(j);
     applyRainFX(j);
     renderForecast(j);
-    activateForecastClicks();
+        activateForecastClicks();
     applyWeatherBackground(j.current.weather_code);
     renderCityList();
     updateTip(j);
+
+    // ✅ MAJ automatique des prévisions 24h pour la ville courante
+    if (typeof timeline24h !== "undefined" && timeline24h) {
+      timeline24h.classList.remove("hidden");
+      renderTimeline24h(j);
+    }
+
+    // --- Timezone logic ---
+
     // --- Timezone logic ---
     if (j.utc_offset_seconds !== undefined) {
       updateCityClockFromOffset(j.utc_offset_seconds);
@@ -2564,4 +2573,93 @@ function updateAddCityButtonVisibility() {
     btnAddCity.classList.remove("hidden");
   }
 }
+
+
+
+// ===== PATCH 24H TIMELINE TOGGLE =====
+const _btn24h = document.getElementById("btn-24h");
+const _timeline24h = document.getElementById("timeline-24h");
+
+if (_btn24h && _timeline24h) {
+  _btn24h.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!lastForecastData) return;
+
+    _timeline24h.classList.toggle("hidden");
+    if (!_timeline24h.classList.contains("hidden")) {
+      renderTimeline24h(lastForecastData);
+    }
+  });
+}
+// ====================================
+
+
+// ===============================
+// ✅ FINAL LOGIQUE : MAJ AU CLIC VILLE
+// ===============================
+
+// point d'entrée UNIQUE quand on choisit une ville
+async function selectCity(city) {
+  if (!city || !city.lat || !city.lon) return;
+  await loadCityWeather(city.lat, city.lon, city.name);
+}
+
+// surcharge sécurisée du click sur une ville
+document.addEventListener("click", e => {
+  const cityEl = e.target.closest("[data-lat][data-lon]");
+  if (!cityEl) return;
+
+  const city = {
+    name: cityEl.dataset.name || "",
+    lat: cityEl.dataset.lat,
+    lon: cityEl.dataset.lon
+  };
+
+  selectCity(city);
+});
+// === Flèches de scroll pour la timeline 24h ===
+document.addEventListener("DOMContentLoaded", () => {
+  const timeline = document.getElementById("timeline-24h");
+  if (!timeline) return;
+
+  // évite double-wrapper si jamais le script est chargé 2 fois
+  if (timeline.parentElement && timeline.parentElement.classList.contains("timeline-24h-wrapper")) {
+    return;
+  }
+
+  const parent = timeline.parentElement;
+  if (!parent) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "timeline-24h-wrapper";
+  parent.insertBefore(wrapper, timeline);
+
+  const arrowLeft = document.createElement("button");
+  arrowLeft.className = "timeline-arrow timeline-arrow-left";
+  arrowLeft.type = "button";
+  arrowLeft.textContent = "‹";
+
+  const arrowRight = document.createElement("button");
+  arrowRight.className = "timeline-arrow timeline-arrow-right";
+  arrowRight.type = "button";
+  arrowRight.textContent = "›";
+
+  wrapper.appendChild(arrowLeft);
+  wrapper.appendChild(timeline);
+  wrapper.appendChild(arrowRight);
+
+  const scrollAmount = 3 * 56; // ~ 3 cartes
+
+  arrowLeft.addEventListener("click", (e) => {
+    e.stopPropagation();
+    timeline.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+  });
+
+  arrowRight.addEventListener("click", (e) => {
+    e.stopPropagation();
+    timeline.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  });
+});
+
 
