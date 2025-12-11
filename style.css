@@ -709,6 +709,11 @@ body.theme-night .sun-times-block {
 /* ====================================================================== */
 /* MODULE SOLEIL 🌅🌇 — Lever & coucher du soleil                         */
 /* ====================================================================== */
+.details-card {
+  min-height: 190px;
+  position: relative;        /* ➜ pour que le bloc soleil se cale sur la carte */
+  padding-bottom: 48px;      /* ➜ pour laisser la place au bloc en bas à droite */
+}
 
 .sun-times-block {
   position: absolute;
