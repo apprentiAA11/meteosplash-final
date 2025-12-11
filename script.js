@@ -668,19 +668,31 @@ async function loadCityWeather(ci) {
     const r = await fetch(url);
     const j = await r.json();
 
-    // Lever / coucher du soleil (jour courant) – heures locales
-    if (j.daily && j.daily.sunrise && j.daily.sunset) {
-      const sr = new Date(j.daily.sunrise[0]);
-      const ss = new Date(j.daily.sunset[0]);
-      citySunriseHour = sr.getHours() + sr.getMinutes() / 60;
-      citySunsetHour  = ss.getHours() + ss.getMinutes() / 60;
+       // Lever / coucher du soleil (jour courant) – heures locales
+    if (
+      j.daily &&
+      Array.isArray(j.daily.sunrise) &&
+      j.daily.sunrise.length > 0 &&
+      Array.isArray(j.daily.sunset) &&
+      j.daily.sunset.length > 0
+    ) {
+      const srDate = new Date(j.daily.sunrise[0]);
+      const ssDate = new Date(j.daily.sunset[0]);
+
+      if (!isNaN(srDate.getTime()) && !isNaN(ssDate.getTime())) {
+        citySunriseHour = srDate.getHours() + srDate.getMinutes() / 60;
+        citySunsetHour  = ssDate.getHours()  + ssDate.getMinutes()  / 60;
+      } else {
+        citySunriseHour = null;
+        citySunsetHour  = null;
+        console.warn("Sunrise/sunset invalides pour cette ville :", j.daily);
+      }
     } else {
       citySunriseHour = null;
       citySunsetHour = null;
-      // Lever / coucher du soleil calculés
-      applyTheme(); // ✅ recalcul auto jour / nuit SOLAIRE
-
+      console.warn("Aucune info sunrise/sunset dans daily pour cette ville.");
     }
+
 
 
     weatherCache[ci.name] = j;
