@@ -2218,28 +2218,42 @@ body.theme-night .radar-clock{
 #add-city-overlay { display:none; }
 #add-city-overlay.active { display:block; }
 
-/* ================= TIMELINE 24H ================= */
+/* ================= TIMELINE 24H — Version iOS Premium ================= */
 
 .timeline-24h {
-  margin: 10px 0 14px;
-  padding: 8px 6px;
   display: flex;
-  gap: 10px;
   overflow-x: auto;
-  scrollbar-width: none;
+  gap: 14px;
+  padding: 12px;
+  margin: 12px 0 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.45);
+  animation: tl24Fade 0.4s ease-out;
+  scroll-snap-type: x mandatory;
 }
 .timeline-24h::-webkit-scrollbar {
   display: none;
 }
 
+body.theme-night .timeline-24h {
+  background: rgba(20,20,40,0.35);
+  border-color: rgba(140,140,255,0.3);
+}
+
 .hour-item {
-  min-width: 56px;
+  min-width: 58px;
   padding: 8px 4px;
-  border-radius: 14px;
+  border-radius: 16px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
   font-size: 0.8rem;
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 body.theme-night .hour-item {
@@ -2251,18 +2265,25 @@ body.theme-night .hour-item {
 }
 
 .hour-time {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.72rem;
+  opacity: 0.9;
 }
 
 .hour-icon {
-  font-size: 1.3rem;
-  margin: 4px 0;
+  font-size: 1.45rem;
 }
 
 .hour-temp {
   font-weight: 600;
+  font-size: 0.92rem;
 }
+
+/* Animation */
+@keyframes tl24Fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 
 
 /* === ALIGNEMENT DU BOUTON FLECHÉ (BAS) AVEC CELUI DE GAUCHE === */
