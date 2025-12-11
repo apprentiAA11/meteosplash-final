@@ -2270,3 +2270,7 @@ body.theme-night .hour-item {
     transform: translateY(0) !important;
     z-index: 20 !important;
 }
+.hidden-merged {
+  display: none !important;
+  visibility: hidden !important;
+}
