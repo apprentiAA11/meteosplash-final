@@ -703,3 +703,7 @@ body.theme-night .sun-times-block {
 .sun-icon {
   font-size: 1rem;
 }
+.details-card {
+  position: relative;
+}
+
