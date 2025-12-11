@@ -2218,42 +2218,28 @@ body.theme-night .radar-clock{
 #add-city-overlay { display:none; }
 #add-city-overlay.active { display:block; }
 
-/* ================= TIMELINE 24H — Version iOS Premium ================= */
+/* ================= TIMELINE 24H ================= */
 
 .timeline-24h {
+  margin: 10px 0 14px;
+  padding: 8px 6px;
   display: flex;
+  gap: 10px;
   overflow-x: auto;
-  gap: 14px;
-  padding: 12px;
-  margin: 12px 0 18px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.25);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.45);
-  animation: tl24Fade 0.4s ease-out;
-  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 .timeline-24h::-webkit-scrollbar {
   display: none;
 }
 
-body.theme-night .timeline-24h {
-  background: rgba(20,20,40,0.35);
-  border-color: rgba(140,140,255,0.3);
-}
-
 .hour-item {
-  min-width: 58px;
+  min-width: 56px;
   padding: 8px 4px;
-  border-radius: 16px;
+  border-radius: 14px;
   text-align: center;
-  background: rgba(255,255,255,0.85);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
   font-size: 0.8rem;
-  scroll-snap-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 body.theme-night .hour-item {
@@ -2265,25 +2251,18 @@ body.theme-night .hour-item {
 }
 
 .hour-time {
-  font-size: 0.72rem;
-  opacity: 0.9;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .hour-icon {
-  font-size: 1.45rem;
+  font-size: 1.3rem;
+  margin: 4px 0;
 }
 
 .hour-temp {
   font-weight: 600;
-  font-size: 0.92rem;
 }
-
-/* Animation */
-@keyframes tl24Fade {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 
 
 /* === ALIGNEMENT DU BOUTON FLECHÉ (BAS) AVEC CELUI DE GAUCHE === */
@@ -2604,4 +2583,367 @@ body:not(.theme-night) #btn-forecast-14 {
 }
 .sun-icon {
   font-size: 18px;
+}
+
+/* ==========================
+   RADAR – iOS PREMIUM STYLE
+   ========================== */
+
+.radar-popup {
+  max-width: 920px;
+  width: 100%;
+  padding: 18px 22px 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  animation: radarPopupIn 0.3s ease-out;
+}
+
+body.theme-night .radar-popup {
+  background: rgba(8, 10, 32, 0.92);
+  border-color: rgba(150, 168, 255, 0.6);
+}
+
+/* Carte radar */
+.radar-map-wrapper {
+  margin-top: 10px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  position: relative;
+}
+
+body.theme-night .radar-map-wrapper {
+  background: radial-gradient(circle at top, #111827, #020617);
+}
+
+.radar-map {
+  width: 100%;
+  height: 340px;
+  border-radius: 20px;
+}
+
+/* Tabs Pluie / Vent / Temp avec look iOS */
+.radar-tabs {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+body.theme-night .radar-tabs {
+  background: rgba(13, 16, 48, 0.96);
+}
+
+.radar-tab {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.radar-tab-active {
+  background: linear-gradient(135deg, #4f8dff, #7f63ff);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(79, 141, 255, 0.55);
+}
+
+/* Timeline + play */
+.radar-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.radar-window-label {
+  flex: 1;
+  font-size: 0.84rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.radar-play-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: linear-gradient(135deg,#ffd66b,#ff9a3c);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+
+body.theme-night .radar-play-button {
+  background: linear-gradient(135deg,#ffd66b,#ff9f3f);
+  color: #111827;
+}
+
+/* Slider iOS */
+.radar-slider-shell {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(7,10,38,0.92);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+
+.radar-slider-shell input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.9));
+  outline: none;
+  cursor: pointer;
+}
+
+/* WebKit thumb */
+.radar-slider-shell input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(7,10,38,0.9), 0 4px 10px rgba(0,0,0,0.7);
+}
+
+/* Firefox thumb */
+.radar-slider-shell input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(7,10,38,0.9), 0 4px 10px rgba(0,0,0,0.7);
+}
+
+.radar-slider-shell input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.9));
+}
+
+/* Légende pastilles iOS */
+.radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.radar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.radar-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.6);
+}
+
+/* petites couleurs type Meteo iOS */
+.radar-legend-dot-low {
+  background: #4a9dff;
+}
+.radar-legend-dot-med {
+  background: #3dd67c;
+}
+.radar-legend-dot-high {
+  background: #f5d034;
+}
+.radar-legend-dot-very {
+  background: #ff4a4a;
+}
+
+/* Animation popup */
+@keyframes radarPopupIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+
+
+/* ============================================================
+   AMBIANCE DYNAMIQUE — CALQUE GLOBAL
+   Niveau : immersif modéré (option B)
+============================================================ */
+
+#ambient-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1;
+  transition:
+    background 0.8s ease,
+    opacity 0.8s ease,
+    filter 0.8s ease;
+}
+
+/* Ambiance de base selon l'heure locale */
+
+body.ambient-morning #ambient-layer {
+  background: linear-gradient(160deg, #ffe8c7, #ffb6d1, #bed9ff);
+  filter: blur(12px) saturate(1.05);
+  animation: ambientSoftDrift 22s ease-in-out infinite;
+}
+
+body.ambient-day #ambient-layer {
+  background: radial-gradient(circle at 20% 0%, #ffffff, #cfe4ff, #86b4ff);
+  filter: blur(14px) saturate(1.1);
+  animation: ambientSoftDrift 26s ease-in-out infinite;
+}
+
+body.ambient-evening #ambient-layer {
+  background: linear-gradient(150deg, #ffcf9f, #ff9fb8, #7052ff);
+  filter: blur(14px) saturate(1.1);
+  animation: ambientSoftDrift 26s ease-in-out infinite;
+}
+
+body.ambient-night #ambient-layer {
+  background: radial-gradient(circle at 50% 20%, #252849, #070816);
+  filter: blur(16px) saturate(1.15);
+  animation: ambientNightPulse 28s ease-in-out infinite;
+}
+
+/* Couches météo additionnelles (pluie, neige, brouillard, orage) */
+
+body.ambient-rain #ambient-layer::before,
+body.ambient-snow #ambient-layer::before,
+body.ambient-fog #ambient-layer::before,
+body.ambient-storm #ambient-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Pluie : brume douce horizontale */
+body.ambient-rain #ambient-layer::before {
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.08),
+    rgba(180,195,215,0.25),
+    rgba(80,95,115,0.35)
+  );
+  mix-blend-mode: soft-light;
+  animation: ambientMistDrift 32s linear infinite;
+  opacity: 0.55;
+}
+
+/* Neige : voile froid vertical */
+body.ambient-snow #ambient-layer::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.4),
+    rgba(214,231,255,0.35),
+    rgba(156,188,232,0.25)
+  );
+  mix-blend-mode: screen;
+  animation: ambientSnowFall 26s linear infinite;
+  opacity: 0.55;
+}
+
+/* Brouillard : éclaircissement laiteux */
+body.ambient-fog #ambient-layer::before {
+  background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(230,233,238,0.7));
+  filter: blur(18px);
+  opacity: 0.85;
+}
+
+/* Orage : halo sombre + lueurs */
+body.ambient-storm #ambient-layer::before {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255,255,255,0.18), transparent 55%),
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,0.12), transparent 60%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.8), rgba(0,0,0,0.95));
+  mix-blend-mode: soft-light;
+  animation: ambientStormGlow 18s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+/* Animations clés */
+
+@keyframes ambientSoftDrift {
+  0%   { transform: translate3d(0, 0, 0); }
+  50%  { transform: translate3d(-4%, 2%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes ambientNightPulse {
+  0%   { filter: blur(16px) saturate(1.05); }
+  50%  { filter: blur(19px) saturate(1.18); }
+  100% { filter: blur(16px) saturate(1.05); }
+}
+
+@keyframes ambientMistDrift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-10%); }
+}
+
+@keyframes ambientSnowFall {
+  0%   { transform: translateY(-6%); }
+  100% { transform: translateY(6%); }
+}
+
+@keyframes ambientStormGlow {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 0.9; }
+  100% { opacity: 0.5; }
+}
+
+/* Ajustement des cartes en fonction des ambiances */
+
+body.ambient-night .glass-card {
+  background: rgba(15, 18, 40, 0.45);
+  backdrop-filter: blur(22px) saturate(135%);
+}
+
+body.ambient-rain .glass-card {
+  background: rgba(16, 24, 43, 0.42);
+  backdrop-filter: blur(24px) brightness(0.96);
+}
+
+body.ambient-snow .glass-card {
+  background: rgba(228, 239, 255, 0.32);
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+body.ambient-fog .glass-card {
+  background: rgba(240, 242, 246, 0.68);
+  backdrop-filter: blur(18px);
+}
+
+body.ambient-storm .glass-card {
+  background: rgba(8, 10, 26, 0.75);
+  backdrop-filter: blur(26px) saturate(150%);
+}
+
+/* Transition douce globale */
+body {
+  transition:
+    background 0.8s ease,
+    color 0.4s ease;
 }
