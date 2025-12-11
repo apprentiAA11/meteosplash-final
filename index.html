@@ -18,7 +18,8 @@
     <div id="storm-layer"></div>
     <div id="snow-layer"></div>
     <div id="sun-layer"></div>
-</div>
+  </div>
+
   <div class="app-shell">
 
     <!-- =================== HEADER =================== -->
@@ -38,7 +39,7 @@
           <button id="btn-theme-toggle" class="icon-button theme-toggle">🌓 Auto</button>
           <button id="btn-geolocate" class="icon-button location">📍 Ma position</button>
           <button id="btn-speak" class="icon-button speak">🗣 Météo parlée</button>
-<button id="btn-add-city" class="icon-button add-city" title="Ajouter une ville">➕</button>
+          <button id="btn-add-city" class="icon-button add-city" title="Ajouter une ville">➕</button>
         </div>
       </div>
     </header>
@@ -75,35 +76,29 @@
 
             <div class="radar-legend">
               <div id="legend-container" class="legend-container hidden">
-  
-  <!-- Légende pluie -->
-  <div class="legend-group" data-type="rain">
-    <span class="legend-dot color-rain-1"></span> Faible
-    <span class="legend-dot color-rain-2"></span> Modérée
-    <span class="legend-dot color-rain-3"></span> Forte
-    <span class="legend-dot color-rain-4"></span> Très forte
-  </div>
 
-  <!-- Légende vent -->
-  <div class="legend-group hidden" data-type="wind">
-    <span class="legend-dot color-wind-1"></span> Faible
-    <span class="legend-dot color-wind-2"></span> Modéré
-    <span class="legend-dot color-wind-3"></span> Fort
-    <span class="legend-dot color-wind-4"></span> Très fort
-  </div>
+                <div class="legend-group" data-type="rain">
+                  <span class="legend-dot color-rain-1"></span> Faible
+                  <span class="legend-dot color-rain-2"></span> Modérée
+                  <span class="legend-dot color-rain-3"></span> Forte
+                  <span class="legend-dot color-rain-4"></span> Très forte
+                </div>
 
-  <!-- Légende température -->
-  <div class="legend-group hidden" data-type="temp">
-    <span class="legend-dot color-temp-1"></span> Très froid
-    <span class="legend-dot color-temp-2"></span> Froid
-    <span class="legend-dot color-temp-3"></span> Doux
-    <span class="legend-dot color-temp-4"></span> Chaud / Très chaud
-  </div>
+                <div class="legend-group hidden" data-type="wind">
+                  <span class="legend-dot color-wind-1"></span> Faible
+                  <span class="legend-dot color-wind-2"></span> Modéré
+                  <span class="legend-dot color-wind-3"></span> Fort
+                  <span class="legend-dot color-wind-4"></span> Très fort
+                </div>
 
-</div>
+                <div class="legend-group hidden" data-type="temp">
+                  <span class="legend-dot color-temp-1"></span> Très froid
+                  <span class="legend-dot color-temp-2"></span> Froid
+                  <span class="legend-dot color-temp-3"></span> Doux
+                  <span class="legend-dot color-temp-4"></span> Chaud / Très chaud
+                </div>
 
-
-              
+              </div>
             </div>
           </div>
         </div>
@@ -118,7 +113,6 @@
       </div>
     </div>
 
-
     <!-- ===================== MAIN ===================== -->
     <main class="layout">
 
@@ -131,13 +125,11 @@
               <p id="details-subtitle" class="card-subtitle">Ajoute une ville ou ta position</p>
             </div>
             <button id="btn-24h" class="ghost-button history-button">🕒 Prévisions 24h</button>
-<button id="btn-history" class="ghost-button history-button">📜 Historique</button>
+            <button id="btn-history" class="ghost-button history-button">📜 Historique</button>
           </header>
 
           <div id="timeline-24h" class="timeline-24h hidden"></div>
-
           <div id="details-current" class="details-grid"></div>
-
           <div id="details-history" class="detail-block hidden"></div>
 
           <div class="wind-block">
@@ -150,13 +142,28 @@
                 <div class="compass-arrow"></div>
               </div>
             </div>
+
             <div class="wind-info">
               <p id="wind-line-main" class="wind-main">Vent : —</p>
               <p id="wind-line-sub" class="wind-sub">Rafales : —</p>
             </div>
+
+            <!-- Lever / coucher maintenu ici UNIQUEMENT -->
+            <div id="sun-times" class="sun-times">
+              <div class="sun-item">
+                <span class="sun-icon">🌅</span>
+                <span id="sunrise-time">--:--</span>
+              </div>
+              <div class="sun-item">
+                <span class="sun-icon">🌇</span>
+                <span id="sunset-time">--:--</span>
+              </div>
+            </div>
+
           </div>
         </section>
 
+        <!-- Prévisions -->
         <section class="card glass-card forecast-card">
           <header class="card-header">
             <div>
@@ -168,24 +175,27 @@
               <button id="btn-forecast-14" class="pill-button">14 jours</button>
             </div>
           </header>
+
           <div id="forecast-list" class="forecast-list"></div>
         </section>
       </section>
 
-
       <!-- Colonne droite -->
       <section class="column-right">
+
         <div id="add-city-panel" class="add-city-panel hidden-merged">
           <input id="city-input" type="text" class="ios-search-input" placeholder="Ajouter une ville..." autocomplete="off" />
           <ul id="autocomplete-list" class="autocomplete-list inline-autocomplete"></ul>
         </div>
 
+        <!-- Mes villes -->
         <section class="card glass-card cities-card">
           <header class="card-header">
             <div>
               <h2>Mes villes</h2>
               <p class="card-subtitle">Clique sur ➕ pour ajouter</p>
             </div>
+
             <div class="sort-shell">
               <label for="sort-select">Tri</label>
               <select id="sort-select">
@@ -201,29 +211,18 @@
           <div class="cities-footer">
             <button id="btn-reset" class="ghost-button danger">Réinitialiser</button>
           </div>
+
         </section>
 
+        <!-- Conseil du jour -->
         <section class="card glass-card tips-card">
           <h3>Conseil du jour</h3>
           <p id="details-tip" class="hint">Ajoute une ville ou utilise la géolocalisation.</p>
         </section>
+
       </section>
 
-    
     </main>
-
-    <!-- @PATCH AddCityPopup -->
-    <div id="add-city-overlay" class="day-overlay">
-      <div class="overlay-backdrop"></div>
-      <div class="day-popup glass-card">
-        <header class="popup-header">
-          <h2>Ajouter une ville</h2>
-          <button id="btn-close-add-city" class="icon-button close-popup">✕</button>
-        </header>
-        <div id="add-city-popup-slot"></div>
-      </div>
-    </div>
-
 
     <footer class="app-footer">
       <p>Météo Splash · Bright Splash Studio · Données : <a href="https://open-meteo.com">Open-Meteo</a></p>
@@ -232,31 +231,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-
-<!-- =============== OVERLAY DÉTAIL JOUR =============== -->
-<div id="day-overlay" class="day-overlay">
-  <div class="overlay-backdrop"></div>
-
-  <div class="day-popup glass-card">
-    <header class="popup-header">
-      <h2 id="day-overlay-title">Détail du jour</h2>
-      <button id="btn-close-day" class="icon-button close-popup">✕</button>
-    </header>
-    <p id="day-overlay-subtitle" class="day-overlay-subtitle"></p>
-
-    <div class="day-tabs">
-      <button id="day-tab-temp" class="pill-button pill-button-active">Température</button>
-      <button id="day-tab-rain" class="pill-button">Pluie</button>
-      <button id="day-tab-wind" class="pill-button">Vent</button>
-      <button id="day-tab-humidity" class="pill-button">Humidité</button>
-    </div>
-
-    <canvas id="chart-temp" class="day-graph active-day-graph"></canvas>
-    <canvas id="chart-rain" class="day-graph"></canvas>
-    <canvas id="chart-wind" class="day-graph"></canvas>
-    <canvas id="chart-humidity" class="day-graph"></canvas>
-  </div>
-</div>
 
 </body>
 </html>
