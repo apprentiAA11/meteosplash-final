@@ -2261,6 +2261,7 @@ body.theme-night .hour-item {
   font-weight: 600;
 }
 
+
 /* === ALIGNEMENT DU BOUTON FLECHÉ (BAS) AVEC CELUI DE GAUCHE === */
 #hour-scroll-right, .hour-scroll-right {
     position: absolute !important;
@@ -2269,12 +2270,3 @@ body.theme-night .hour-item {
     transform: translateY(0) !important;
     z-index: 20 !important;
 }
-#add-city-panel {
-  height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
