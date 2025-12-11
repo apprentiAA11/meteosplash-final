@@ -706,4 +706,37 @@ body.theme-night .sun-times-block {
 .details-card {
   position: relative;
 }
+/* ====================================================================== */
+/* MODULE SOLEIL 🌅🌇 — Lever & coucher du soleil                         */
+/* ====================================================================== */
 
+.sun-times-block {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(15, 16, 44, 0.88);
+  color: #f6f6ff;
+  font-size: 0.86rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+body.theme-day .sun-times-block {
+  background: rgba(255, 255, 255, 0.9);
+  color: #111322;
+}
+
+.sun-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sun-icon {
+  font-size: 1rem;
+}
