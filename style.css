@@ -2260,3 +2260,13 @@ body.theme-night .hour-item {
 .hour-temp {
   font-weight: 600;
 }
+
+
+/* === ALIGNEMENT DU BOUTON FLECHÉ (BAS) AVEC CELUI DE GAUCHE === */
+#hour-scroll-right, .hour-scroll-right {
+    position: absolute !important;
+    top: 0px !important;            /* Aligné avec le bouton de gauche */
+    right: 10px !important;         /* Collé à droite */
+    transform: translateY(0) !important;
+    z-index: 20 !important;
+}
