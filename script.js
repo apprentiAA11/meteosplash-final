@@ -688,6 +688,7 @@ async function loadCityWeather(ci) {
     renderCurrent(j);
     renderWind(j);
     applyRainFX(j);
+    applyWeatherAnimations(j);
     renderForecast(j);
         activateForecastClicks();
     applyWeatherBackground(j.current.weather_code);
@@ -752,9 +753,13 @@ function renderTimeline24h(j) {
    10. AFFICHAGE METEO ACTUELLE
 -------------------------------------------------------------------------- */
 
+
 function renderCurrent(j) {
   if (!detailsCurrent) return;
   const c = j.current;
+
+  const pluieTotal = (c.rain ?? 0) + (c.showers ?? 0);
+  const pluieDisplay = pluieTotal > 0 ? pluieTotal.toFixed(1) : (c.precipitation ?? 0);
 
   detailsCurrent.innerHTML = `
     <div class="detail-block">
@@ -772,7 +777,7 @@ function renderCurrent(j) {
     <div class="detail-block">
       <div class="detail-label">Précipitations</div>
       <div class="detail-value">${c.precipitation} mm</div>
-      <div class="detail-sub">Pluie : ${c.rain} mm</div>
+      <div class="detail-sub">Pluie : ${pluieDisplay} mm</div>
     </div>
 
     <div class="detail-block">
@@ -781,7 +786,15 @@ function renderCurrent(j) {
       <div class="detail-sub">Averse : ${c.showers} mm</div>
     </div>
   `;
+
+  const sr = j.daily.sunrise ? j.daily.sunrise[0].substring(11,16) : "";
+  const ss = j.daily.sunset ? j.daily.sunset[0].substring(11,16) : "";
+  const el_sr = document.getElementById("sunrise-time");
+  const el_ss = document.getElementById("sunset-time");
+  if (el_sr) el_sr.textContent = sr;
+  if (el_ss) el_ss.textContent = ss;
 }
+
 
 /* --------------------------------------------------------------------------
    11. Boussole du vent
@@ -810,24 +823,22 @@ function renderWind(j) {
 
 if (btnForecast7) {
   btnForecast7.addEventListener("click", () => {
-    btnForecast7.classList.add("pill-button-active");
-    btnForecast14 && btnForecast14.classList.remove("pill-button-active");
+    updateForecastButtonsActiveState(7);
     if (selectedCity) {
-      renderForecast(weatherCache[selectedCity.name], 7);
-      activateForecastClicks();
+        renderForecast(weatherCache[selectedCity.name], 7);
+        activateForecastClicks();
     }
-  });
+});
 }
 
 if (btnForecast14) {
   btnForecast14.addEventListener("click", () => {
-    btnForecast14.classList.add("pill-button-active");
-    btnForecast7 && btnForecast7.classList.remove("pill-button-active");
+    updateForecastButtonsActiveState(14);
     if (selectedCity) {
-      renderForecast(weatherCache[selectedCity.name], 14);
-      activateForecastClicks();
+        renderForecast(weatherCache[selectedCity.name], 14);
+        activateForecastClicks();
     }
-  });
+});
 }
 
 const btn24h = document.getElementById("btn-24h");
@@ -906,16 +917,51 @@ function labelForWeatherCode(code) {
 }
 
 function iconForWeatherCode(code) {
-  if (code === 0) return "☀️";
-  if ([1, 2, 3].includes(code)) return "⛅";
-  if ([45, 48].includes(code)) return "🌫";
-  if ([51, 53, 55].includes(code)) return "🌦";
-  if ([61, 63, 65].includes(code)) return "🌧";
-  if ([71, 73, 75].includes(code)) return "❄️";
-  if ([95, 96, 99].includes(code)) return "⛈";
-  return "🌡";
+  // Open-Meteo weather codes
+  if (code === 0) return "☀️";                       // ciel clair
+  if (code === 1) return "🌤️";                       // peu nuageux
+  if (code === 2) return "⛅";                        // partiellement nuageux
+  if (code === 3) return "☁️";                       // couvert
+
+  if (code === 45 || code === 48) return "🌫️";       // brouillard
+
+  if ([51, 53, 55].includes(code)) return "🌦️";      // bruine
+  if ([61, 63, 65].includes(code)) return "🌧️";      // pluie
+  if ([80, 81, 82].includes(code)) return "🌧️";      // averses
+
+  if ([71, 73, 75].includes(code)) return "🌨️";      // neige
+  if ([85, 86].includes(code)) return "❄️";          // fortes chutes de neige
+
+  if ([95].includes(code)) return "⛈️";               // orage
+  if ([96, 99].includes(code)) return "🌩️";          // orage + grêle
+
+  return "❓";
 }
 
+function updateForecastButtonsActiveState(active) {
+    if (active === 7) {
+        btnForecast7.classList.add("pill-button-active");
+        btnForecast14.classList.remove("pill-button-active");
+    } else if (active === 14) {
+        btnForecast14.classList.add("pill-button-active");
+        btnForecast7.classList.remove("pill-button-active");
+    }
+}
+btnForecast7.addEventListener("click", () => {
+    updateForecastButtonsActiveState(7);
+    if (selectedCity) {
+        renderForecast(weatherCache[selectedCity.name], 7);
+        activateForecastClicks();
+    }
+});
+
+btnForecast14.addEventListener("click", () => {
+    updateForecastButtonsActiveState(14);
+    if (selectedCity) {
+        renderForecast(weatherCache[selectedCity.name], 14);
+        activateForecastClicks();
+    }
+});
 /* --------------------------------------------------------------------------
    14. DÉTAIL JOUR (graphiques température / pluie / vent)
 -------------------------------------------------------------------------- */
@@ -2315,7 +2361,8 @@ function applyRainFX(j) {
   }
 
   const c = j.current;
-  const rainAmt = (c.rain ?? c.precipitation ?? 0);
+  const baseRain = (c.rain ?? 0) + (c.showers ?? 0);
+  const rainAmt = baseRain > 0 ? baseRain : (c.precipitation ?? 0);
   const windSpeed = c.wind_speed_10m ?? 0;
 
   if (rainAmt <= 0) {
@@ -2333,6 +2380,34 @@ function applyRainFX(j) {
   const intensity = Math.min(1.5, 0.5 + rainAmt / 2.5);
   startRain(intensity);
 }
+
+
+
+function applyWeatherAnimations(j) {
+  if (!j || !j.current) return;
+
+  const code = j.current.weather_code;
+  const storm = document.getElementById("storm-layer");
+  const snow  = document.getElementById("snow-layer");
+  const sun   = document.getElementById("sun-layer");
+
+  if (!storm || !snow || !sun) return;
+
+  // Reset visibilités
+  storm.style.opacity = 0;
+  snow.style.opacity  = 0;
+  sun.style.opacity   = 0;
+
+  // Groupes de codes Open-Meteo
+  const isSnow  = [71,73,75,77,85,86].includes(code);
+  const isStorm = [95,96,99].includes(code);
+  const isSun   = (code === 0);
+
+  if (isSnow)  snow.style.opacity  = 1;
+  if (isStorm) storm.style.opacity = 1;
+  if (isSun)   sun.style.opacity   = 1;
+}
+
 
 function updateRadarClock(isoTime, timezone) {
   const el = document.getElementById("radar-clock");
@@ -2520,6 +2595,7 @@ function suggestNearbyCity(currentLat, currentLon) {
 
   function openPopup(){
     popupSlot.appendChild(panel);
+    panel.classList.remove("hidden-merged");
     overlay.classList.add("active");
     document.body.classList.add("no-scroll");
     setTimeout(()=>input && input.focus(),150);
@@ -2531,6 +2607,7 @@ function suggestNearbyCity(currentLat, currentLon) {
     } else {
       originalParent.appendChild(panel);
     }
+    panel.classList.add("hidden-merged");
     overlay.classList.remove("active");
     document.body.classList.remove("no-scroll");
   }
@@ -2560,21 +2637,22 @@ function suggestNearbyCity(currentLat, currentLon) {
     },150);
   });
 })();
+
 function updateAddCityButtonVisibility() {
-  const btnAddCity = document.getElementById("btn-add-city");
-  if (!btnAddCity) return;
+  const panel = document.getElementById("add-city-panel");
+  const btnAdd = document.getElementById("btn-add-city");
+  if (!panel || !btnAdd) return;
 
-  // on considère qu'une "vraie" ville ≠ position
-  const hasRealCity = cities.some(c => !c.isCurrentLocation);
+  // Le bouton "+" doit toujours être visible
+  btnAdd.style.display = "inline-flex";
 
-  if (!hasRealCity) {
-    btnAddCity.classList.add("hidden");
-  } else {
-    btnAddCity.classList.remove("hidden");
-  }
+  if (cities.length === 0) {
+    // On replie le panneau d'ajout dans Mes villes
+    panel.classList.add("hidden-merged");
+} else {
+    panel.classList.add("hidden-merged");
 }
-
-
+}
 
 // ===== PATCH 24H TIMELINE TOGGLE =====
 const _btn24h = document.getElementById("btn-24h");
