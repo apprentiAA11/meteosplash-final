@@ -2785,165 +2785,197 @@ body.theme-night .radar-play-button {
 
 
 
-/* ============================================================
-   AMBIANCE DYNAMIQUE — CALQUE GLOBAL
-   Niveau : immersif modéré (option B)
-============================================================ */
+/* ===== Glow iOS sur le Slider Radar ===== */
 
-#ambient-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 1;
-  transition:
-    background 0.8s ease,
-    opacity 0.8s ease,
-    filter 0.8s ease;
-}
-
-/* Ambiance de base selon l'heure locale */
-
-body.ambient-morning #ambient-layer {
-  background: linear-gradient(160deg, #ffe8c7, #ffb6d1, #bed9ff);
-  filter: blur(12px) saturate(1.05);
-  animation: ambientSoftDrift 22s ease-in-out infinite;
-}
-
-body.ambient-day #ambient-layer {
-  background: radial-gradient(circle at 20% 0%, #ffffff, #cfe4ff, #86b4ff);
-  filter: blur(14px) saturate(1.1);
-  animation: ambientSoftDrift 26s ease-in-out infinite;
-}
-
-body.ambient-evening #ambient-layer {
-  background: linear-gradient(150deg, #ffcf9f, #ff9fb8, #7052ff);
-  filter: blur(14px) saturate(1.1);
-  animation: ambientSoftDrift 26s ease-in-out infinite;
-}
-
-body.ambient-night #ambient-layer {
-  background: radial-gradient(circle at 50% 20%, #252849, #070816);
-  filter: blur(16px) saturate(1.15);
-  animation: ambientNightPulse 28s ease-in-out infinite;
-}
-
-/* Couches météo additionnelles (pluie, neige, brouillard, orage) */
-
-body.ambient-rain #ambient-layer::before,
-body.ambient-snow #ambient-layer::before,
-body.ambient-fog #ambient-layer::before,
-body.ambient-storm #ambient-layer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Pluie : brume douce horizontale */
-body.ambient-rain #ambient-layer::before {
+.radar-slider-shell input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
   background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0.08),
-    rgba(180,195,215,0.25),
-    rgba(80,95,115,0.35)
+    90deg,
+    rgba(255,255,255,0.25),
+    rgba(255,255,255,0.75),
+    rgba(255,255,255,0.25)
   );
-  mix-blend-mode: soft-light;
-  animation: ambientMistDrift 32s linear infinite;
-  opacity: 0.55;
+  outline: none;
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 8px rgba(255,255,255,0.35),
+    0 0 14px rgba(255,255,255,0.25);
+  transition: background 0.2s ease;
 }
 
-/* Neige : voile froid vertical */
-body.ambient-snow #ambient-layer::before {
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.4),
-    rgba(214,231,255,0.35),
-    rgba(156,188,232,0.25)
-  );
-  mix-blend-mode: screen;
-  animation: ambientSnowFall 26s linear infinite;
-  opacity: 0.55;
+.radar-slider-shell input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 8px rgba(255,255,255,0.9),
+    0 0 18px rgba(120,140,255,0.85),
+    0 6px 12px rgba(0,0,0,0.35),
+    inset 0 0 5px rgba(255,255,255,0.9);
+  border: 2px solid rgba(255,255,255,0.9);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Brouillard : éclaircissement laiteux */
-body.ambient-fog #ambient-layer::before {
-  background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(230,233,238,0.7));
-  filter: blur(18px);
-  opacity: 0.85;
+.radar-slider-shell input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 8px rgba(255,255,255,0.9),
+    0 0 18px rgba(120,140,255,0.85),
+    0 6px 12px rgba(0,0,0,0.35),
+    inset 0 0 5px rgba(255,255,255,0.9);
+  border: 2px solid rgba(255,255,255,0.9);
 }
 
-/* Orage : halo sombre + lueurs */
-body.ambient-storm #ambient-layer::before {
-  background:
-    radial-gradient(circle at 20% 0%, rgba(255,255,255,0.18), transparent 55%),
-    radial-gradient(circle at 80% 10%, rgba(255,255,255,0.12), transparent 60%),
-    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.8), rgba(0,0,0,0.95));
-  mix-blend-mode: soft-light;
-  animation: ambientStormGlow 18s ease-in-out infinite;
-  opacity: 0.7;
+.radar-slider-shell input[type="range"]:active::-webkit-slider-thumb,
+.radar-slider-shell input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.12);
+  box-shadow:
+    0 0 10px rgba(255,255,255,1),
+    0 0 26px rgba(120,140,255,1),
+    0 8px 18px rgba(0,0,0,0.55);
 }
 
-/* Animations clés */
 
-@keyframes ambientSoftDrift {
-  0%   { transform: translate3d(0, 0, 0); }
-  50%  { transform: translate3d(-4%, 2%, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+
+/* ===== Glow iOS Premium pour le bouton Radar Play ===== */
+
+.radar-play-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ffd66b, #ff9a3c);
+  color: #fff;
+  border: none;
+  box-shadow:
+    0 0 10px rgba(255, 214, 105, 0.9),
+    0 0 20px rgba(255, 160, 70, 0.7),
+    0 6px 16px rgba(0,0,0,0.4),
+    inset 0 0 6px rgba(255,255,255,0.45);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
-@keyframes ambientNightPulse {
-  0%   { filter: blur(16px) saturate(1.05); }
-  50%  { filter: blur(19px) saturate(1.18); }
-  100% { filter: blur(16px) saturate(1.05); }
+body.theme-night .radar-play-button {
+  background: linear-gradient(135deg, #ffe08a, #ffb86b);
+  color: #0d1028;
+  box-shadow:
+    0 0 12px rgba(255, 216, 120, 1),
+    0 0 22px rgba(255,155,68,0.9),
+    0 8px 22px rgba(0,0,0,0.65),
+    inset 0 0 10px rgba(255,255,255,0.25);
 }
 
-@keyframes ambientMistDrift {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-10%); }
+.radar-play-button:active {
+  transform: scale(0.92);
+  box-shadow:
+    0 0 6px rgba(255, 214, 105, 0.8),
+    0 0 14px rgba(255,160,70,0.6),
+    0 4px 10px rgba(0,0,0,0.4);
 }
 
-@keyframes ambientSnowFall {
-  0%   { transform: translateY(-6%); }
-  100% { transform: translateY(6%); }
+.radar-play-button.playing {
+  animation: radarPlayPulse 1.6s infinite ease-in-out;
 }
 
-@keyframes ambientStormGlow {
-  0%   { opacity: 0.5; }
-  50%  { opacity: 0.9; }
-  100% { opacity: 0.5; }
+@keyframes radarPlayPulse {
+  0% {
+    box-shadow:
+      0 0 12px rgba(255,214,105,0.9),
+      0 0 26px rgba(255,160,70,0.65),
+      0 6px 16px rgba(0,0,0,0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(255,214,105,1),
+      0 0 40px rgba(255,160,70,0.9),
+      0 10px 26px rgba(0,0,0,0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 12px rgba(255,214,105,0.9),
+      0 0 26px rgba(255,160,70,0.65),
+      0 6px 16px rgba(0,0,0,0.4);
+  }
 }
 
-/* Ajustement des cartes en fonction des ambiances */
 
-body.ambient-night .glass-card {
-  background: rgba(15, 18, 40, 0.45);
-  backdrop-filter: blur(22px) saturate(135%);
+/* ===========================================================
+   FINAL — BOUTONS PREVISIONS 7J / 14J (SOURCE DE VERITE)
+   =========================================================== */
+
+/* Jour : jaune/orangé */
+body.theme-day .pill-button-active {
+  background: linear-gradient(180deg, #F9D65D, #E9A63A);
+  border: 1px solid #D48A22;
+  color: #402500;
 }
 
-body.ambient-rain .glass-card {
-  background: rgba(16, 24, 43, 0.42);
-  backdrop-filter: blur(24px) brightness(0.96);
+/* Nuit / Auto-nuit : ROUGE EXACT #d40d13 */
+body.theme-night .pill-button-active {
+  background: #d40d13;
+  border: 1px solid rgba(255, 180, 170, 0.6);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(212, 13, 19, 0.55);
 }
 
-body.ambient-snow .glass-card {
-  background: rgba(228, 239, 255, 0.32);
-  backdrop-filter: blur(24px) saturate(140%);
+/* Base boutons */
+#btn-forecast-7,
+#btn-forecast-14 {
+  border-radius: 12px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-body.ambient-fog .glass-card {
-  background: rgba(240, 242, 246, 0.68);
-  backdrop-filter: blur(18px);
+/* === MODE NUIT — BOUTONS 7J / 14J ACTIFS === */
+body.theme-night #btn-forecast-7.pill-button-active,
+body.theme-night #btn-forecast-14.pill-button-active {
+  background: #d40d13 !important;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(212, 13, 19, 0.55);
+  border-color: rgba(255, 180, 170, 0.6);
 }
 
-body.ambient-storm .glass-card {
-  background: rgba(8, 10, 26, 0.75);
-  backdrop-filter: blur(26px) saturate(150%);
+.city-item-active {
+  position: relative;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 180, 120, 0.55);
+
+  box-shadow:
+    inset 4px 0 0 #f59e0b, /* liseré gauche */
+    0 8px 24px rgba(0, 0, 0, 0.12);
+
+  transform: translateY(-1px);
 }
 
-/* Transition douce globale */
-body {
-  transition:
-    background 0.8s ease,
-    color 0.4s ease;
+body.theme-night .city-item-active {
+  background: rgba(35, 42, 80, 0.55);
+  border: 1px solid rgba(255, 90, 90, 0.45);
+
+  box-shadow:
+    inset 4px 0 0 #d40d13, /* liseré rouge */
+    0 10px 28px rgba(0, 0, 0, 0.45);
 }
+/* ☀️ Arc solaire plus épais */
+#sun-arc-path,
+#sun-arc-progress {
+  stroke-width: 10;
+}
+
+/* ☀️ Glow léger sur le soleil */
+#sun-dot {
+  filter: drop-shadow(0 0 6px rgba(255, 200, 80, 0.7));
+}
+
