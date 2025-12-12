@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Météo Splash – Script v4.6
+   Météo Splash – Script
    Version INTERMEDIAIRE (stabilité maximale)
    ========================================================================== */
 
@@ -80,6 +80,12 @@ let currentDaySeries = null;
    2. UTILITAIRES
 -------------------------------------------------------------------------- */
 
+function getHourFromLocalISO(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.getHours() + d.getMinutes() / 60;
+}
+
 function degreeToCardinal(angle) {
   const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
   const index = Math.round((angle % 360) / 45) % 8;
@@ -93,10 +99,35 @@ function formatDateISO(date) {
   return `${y}-${m}-${d}`;
 }
 
+function updateRadarClockFromISO(iso, utcOffsetSeconds) {
+  const el = document.getElementById("radar-clock");
+  if (!el || !iso || typeof utcOffsetSeconds !== "number") return;
+
+  // convertir l'heure ISO en heure locale ville
+  const utcMs = Date.parse(iso + "Z");
+  const local = new Date(utcMs + utcOffsetSeconds * 1000);
+
+  const h = String(local.getHours()).padStart(2, "0");
+  const m = String(local.getMinutes()).padStart(2, "0");
+
+  el.textContent = `${h}:${m}`;
+}
+
 function formatDayShort(dateStr) {
   const date = new Date(dateStr);
   return date.toLocaleDateString("fr-FR", { weekday: "short" });
 }
+
+// v6.7 — util ville (comparaison robuste)
+function isSameCity(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const sameName = (a.name || "").toLowerCase() === (b.name || "").toLowerCase();
+  const sameLat = typeof a.lat === "number" && typeof b.lat === "number" && Math.abs(a.lat - b.lat) < 0.01;
+  const sameLon = typeof a.lon === "number" && typeof b.lon === "number" && Math.abs(a.lon - b.lon) < 0.01;
+  return sameName && sameLat && sameLon;
+}
+
 
 function selectCityByIndex(idx) {
   if (idx >= 0 && idx < cities.length) {
@@ -197,7 +228,9 @@ function applyTheme() {
       !body.classList.contains("weather-snow") &&
       !body.classList.contains("weather-storm")
     ) {
-      body.className = baseTheme;
+      body.classList.remove("theme-day", "theme-night");
+      body.classList.add(baseTheme);
+;
     } else {
       body.classList.remove("theme-day", "theme-night");
       body.classList.add(baseTheme);
@@ -211,51 +244,6 @@ function applyTheme() {
     body.classList.remove("theme-day");
     body.classList.add("theme-night");
   }
-
-function applyAmbientTheme(code) {
-  const body = document.body;
-
-  // Reset des classes d'ambiance
-  body.classList.remove(
-    "ambient-morning",
-    "ambient-day",
-    "ambient-evening",
-    "ambient-night",
-    "ambient-rain",
-    "ambient-snow",
-    "ambient-fog",
-    "ambient-storm"
-  );
-
-  const hour =
-    typeof cityLocalHour === "number"
-      ? cityLocalHour
-      : new Date().getHours();
-
-  let baseAmbient;
-  if (hour < 6 || hour >= 22) baseAmbient = "ambient-night";
-  else if (hour < 11) baseAmbient = "ambient-morning";
-  else if (hour < 18) baseAmbient = "ambient-day";
-  else baseAmbient = "ambient-evening";
-
-  if (baseAmbient) body.classList.add(baseAmbient);
-
-  if (code == null) return;
-
-  if (
-    [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)
-  ) {
-    body.classList.add("ambient-rain");
-  } else if ([71, 73, 75, 77].includes(code)) {
-    body.classList.add("ambient-snow");
-  } else if ([45, 48].includes(code)) {
-    body.classList.add("ambient-fog");
-  } else if ([95, 96, 99].includes(code)) {
-    body.classList.add("ambient-storm");
-  }
-}
-
-
 }
 
 
@@ -272,7 +260,98 @@ if (btnThemeToggle) {
       btnThemeToggle.textContent = "🌓 Auto";
     }
     applyTheme();
-  });
+  }); // ✅ FERMETURE MANQUANTE
+}
+
+
+/* --------------------------------------------------------------------------
+   v6.7 (I) — Arc solaire (lever/coucher + position)
+-------------------------------------------------------------------------- */
+
+function clamp01(x) {
+  return Math.max(0, Math.min(1, x));
+}
+
+function updateSunArc(ci) {
+  // SVG structure in index.html:
+  // - <svg id="sun-arc" class="sun-arc" viewBox="0 0 200 80">
+  // - <path id="sun-arc-path" ...>
+  // - <path id="sun-arc-progress" ...>
+  // - <circle id="sun-dot" ...>
+  const arc = document.getElementById("sun-arc") || document.querySelector(".sun-arc");
+  if (!arc) return;
+
+  const sun = document.getElementById("sun-dot") || arc.querySelector("#sun-dot") || arc.querySelector("circle");
+  const progress = document.getElementById("sun-arc-progress") || arc.querySelector("#sun-arc-progress");
+  const path = document.getElementById("sun-arc-path") || arc.querySelector("#sun-arc-path") || progress;
+
+  if (!sun) return;
+
+  // Pré-requis: lever/coucher + offset + heure locale calculée
+  if (
+    !ci ||
+    !ci.sunrise ||
+    !ci.sunset ||
+    typeof ci.utcOffset !== "number" ||
+    typeof cityLocalHour !== "number"
+  ) {
+    sun.style.opacity = "0";
+    if (progress && path && typeof path.getTotalLength === "function") {
+      const len0 = path.getTotalLength();
+      progress.setAttribute("stroke-dasharray", `0 ${len0}`);
+    }
+    return;
+  }
+
+  const sunrise = getHourFromLocalISO(ci.sunrise);
+  const sunset  = getHourFromLocalISO(ci.sunset);
+
+  const now     = cityLocalHour;
+
+  if (sunrise === null || sunset === null || sunset <= sunrise) {
+    sun.style.opacity = "0";
+    if (progress && path && typeof path.getTotalLength === "function") {
+      const len0 = path.getTotalLength();
+      progress.setAttribute("stroke-dasharray", `0 ${len0}`);
+    }
+    return;
+  }
+
+  // Nuit : on masque le soleil
+  if (now < sunrise || now > sunset) {
+    sun.style.opacity = "0";
+    if (progress && path && typeof path.getTotalLength === "function") {
+      const len0 = path.getTotalLength();
+      progress.setAttribute("stroke-dasharray", `0 ${len0}`);
+    }
+    return;
+  }
+
+  sun.style.opacity = "1";
+
+  // t = 0 au lever, 1 au coucher (heure locale de la ville)
+  const t = (now - sunrise) / (sunset - sunrise);
+  const clampedT = Math.max(0, Math.min(1, t));
+
+  // Progression sur l'arc (optionnel mais joli)
+  if (progress && path && typeof path.getTotalLength === "function") {
+    const len = path.getTotalLength();
+    progress.setAttribute("stroke-dasharray", `${clampedT * len} ${len}`);
+  }
+
+  // Demi-cercle gauche -> sommet -> droite
+  // Paramétrage cohérent avec l'arc SVG: M20 60 A80 80 0 0 1 180 60
+  const angle = Math.PI - clampedT * Math.PI; // π (gauche) -> 0 (droite)
+
+  const r  = 70;
+  const cx = 100;
+  const cy = 70;
+
+  const x = cx + r * Math.cos(angle);
+  const y = cy - r * Math.sin(angle);
+
+  sun.setAttribute("cx", String(x));
+  sun.setAttribute("cy", String(y));
 }
 
 /* --------------------------------------------------------------------------
@@ -613,6 +692,10 @@ if (btnReset) {
 
 function renderCityList() {
   if (!cityList) return;
+
+  // 🔒 mémoriser la ville sélectionnée AVANT tri
+  const currentSelected = selectedCity;
+
   cityList.innerHTML = "";
 
   if (sortSelect && sortSelect.value === "alpha") {
@@ -625,10 +708,18 @@ function renderCityList() {
     });
   }
 
+  // 🔒 restaurer la sélection APRÈS tri
+  selectedCity = currentSelected;
+
   cities.forEach((ci, idx) => {
     const el = document.createElement("div");
     el.className = "city-item";
     el.dataset.index = idx;
+
+    // ✅ ville active UNIQUE
+    if (selectedCity && isSameCity(ci, selectedCity)) {
+      el.classList.add("city-item-active");
+    }
 
     const tempVal = weatherCache[ci.name]?.current?.temperature_2m ?? "—";
     const badge = ci.isCurrentLocation
@@ -657,9 +748,9 @@ function renderCityList() {
     });
 
     cityList.appendChild(el);
-    updateAddCityButtonVisibility();
-
   });
+
+  updateAddCityButtonVisibility();
 }
 
 function highlightCity(index) {
@@ -673,10 +764,10 @@ function highlightCity(index) {
 }
 
 /* --------------------------------------------------------------------------
-   9. CHARGER LES DONNÉES MÉTÉO
--------------------------------------------------------------------------- */
+   9. CHARGER LES DONNÉES MÉTÉO (VERSION STABLE)
+--------------------------------------------------------------------------- */
 
-
+/* ⏰ Heure locale ville (SOURCE UNIQUE, fiable) */
 function updateCityClockFromOffset(offsetSeconds) {
   const clock = document.getElementById("radar-clock");
   if (!clock || typeof offsetSeconds !== "number") return;
@@ -684,21 +775,21 @@ function updateCityClockFromOffset(offsetSeconds) {
   const nowUtc = Date.now() + new Date().getTimezoneOffset() * 60000;
   const local = new Date(nowUtc + offsetSeconds * 1000);
 
-  cityLocalHour = local.getHours(); // ✅ utilisé par le mode Auto
-
   const hh = String(local.getHours()).padStart(2, "0");
   const mm = String(local.getMinutes()).padStart(2, "0");
   clock.textContent = `${hh}:${mm}`;
+
+  cityLocalHour = local.getHours() + local.getMinutes() / 60;
+
+  applyTheme();
 }
 
-
+/* 🌍 Chargement météo */
 async function loadCityWeather(ci) {
-  selectedCity = ci;
+  selectedCity = cities.find(c => isSameCity(c, ci)) || ci;
 
   detailsTitle.textContent = ci.name;
-  detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(
-    2
-  )}, Lon ${ci.lon.toFixed(2)}`;
+  detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)}, Lon ${ci.lon.toFixed(2)}`;
 
   try {
     const url =
@@ -713,88 +804,42 @@ async function loadCityWeather(ci) {
     const r = await fetch(url);
     const j = await r.json();
 
-    // Lever / coucher du soleil (jour courant) – heures locales
-    if (j.daily && j.daily.sunrise && j.daily.sunset) {
-      const sr = new Date(j.daily.sunrise[0]);
-      const ss = new Date(j.daily.sunset[0]);
-      citySunriseHour = sr.getHours() + sr.getMinutes() / 60;
-      citySunsetHour  = ss.getHours() + ss.getMinutes() / 60;
+    /* ☀️ Sunrise / Sunset (ISO local ville) */
+    if (j.daily?.sunrise && j.daily?.sunset) {
+      ci.sunrise = j.daily.sunrise[0];
+      ci.sunset  = j.daily.sunset[0];
     } else {
-      citySunriseHour = null;
-      citySunsetHour = null;
-      // Lever / coucher du soleil calculés
-      applyTheme(); // ✅ recalcul auto jour / nuit SOLAIRE
-
+      ci.sunrise = null;
+      ci.sunset  = null;
     }
 
-
     weatherCache[ci.name] = j;
+    lastForecastData = j;
 
     renderCurrent(j);
     renderWind(j);
     applyRainFX(j);
     applyWeatherAnimations(j);
-    renderForecast(j);
-        activateForecastClicks();
     applyWeatherBackground(j.current.weather_code);
     renderCityList();
     updateTip(j);
 
-    // ✅ MAJ automatique des prévisions 24h pour la ville courante
-    if (typeof timeline24h !== "undefined" && timeline24h) {
-      timeline24h.classList.remove("hidden");
-      renderTimeline24h(j);
-    }
+    /* ⏰ heure locale correcte */
+    ci.utcOffset = j.utc_offset_seconds;
+    updateCityClockFromOffset(j.utc_offset_seconds);
 
-    // --- Timezone logic ---
+    /* ☀️ soleil (UN SEUL APPEL) */
+    updateSunArc(ci);
 
-    // --- Timezone logic ---
-    if (j.utc_offset_seconds !== undefined) {
-      updateCityClockFromOffset(j.utc_offset_seconds);
-      applyTheme(); // ✅ recalcul avec heure LOCALE
-      applyAmbientTheme(j.current && typeof j.current.weather_code === "number" ? j.current.weather_code : null);
-    } else {
-      applyAmbientTheme(j.current && typeof j.current.weather_code === "number" ? j.current.weather_code : null);
-    }
+    updateForecastButtonsActiveState(7);
+    renderForecast(j, 7);
+    activateForecastClicks();
 
   } catch (err) {
     console.error("Erreur météo", err);
-    alert("Impossible de récupérer la météo.");
   }
-}
-function renderTimeline24h(j) {
-  const container = document.getElementById("timeline-24h");
-  if (!container || !j?.hourly) return;
 
-  container.innerHTML = "";
-
-  const now = new Date();
-  const times = j.hourly.time;
-  const temps = j.hourly.temperature_2m;
-  const codes = j.hourly.weather_code;
-
-  let added = 0;
-
-  for (let i = 0; i < times.length && added < 24; i++) {
-    const t = new Date(times[i]);
-    if (t < now) continue;
-
-    const item = document.createElement("div");
-    item.className = "hour-item";
-
-    if (t.getHours() === now.getHours()) {
-      item.classList.add("current");
-    }
-
-    item.innerHTML = `
-      <div class="hour-time">${t.getHours()}h</div>
-      <div class="hour-icon">${iconForWeatherCode(codes[i])}</div>
-      <div class="hour-temp">${Math.round(temps[i])}°</div>
-    `;
-
-    container.appendChild(item);
-    added++;
-  }
+  startSunArcLoop();
 }
 
 /* --------------------------------------------------------------------------
@@ -841,6 +886,22 @@ function renderCurrent(j) {
   const el_ss = document.getElementById("sunset-time");
   if (el_sr) el_sr.textContent = sr;
   if (el_ss) el_ss.textContent = ss;
+
+  // v6.7 (H) — micro animation des valeurs
+  try {
+    const values = detailsCurrent.querySelectorAll(".detail-value");
+    values.forEach((v) => {
+      v.classList.remove("value-animate");
+      // relance propre de l'animation
+      void v.offsetWidth;
+      v.classList.add("value-animate");
+      v.addEventListener(
+        "animationend",
+        () => v.classList.remove("value-animate"),
+        { once: true }
+      );
+    });
+  } catch (e) {}
 }
 
 
@@ -907,7 +968,8 @@ if (btn24h && timeline24h) {
 function renderForecast(j, days = 7) {
   if (!forecastList) return;
   const d = j.daily;
-  lastForecastData = j;
+  // lastForecastData = j; ❌ pas nécessaire ici
+
 
   forecastList.innerHTML = "";
 
@@ -995,21 +1057,8 @@ function updateForecastButtonsActiveState(active) {
         btnForecast7.classList.remove("pill-button-active");
     }
 }
-btnForecast7.addEventListener("click", () => {
-    updateForecastButtonsActiveState(7);
-    if (selectedCity) {
-        renderForecast(weatherCache[selectedCity.name], 7);
-        activateForecastClicks();
-    }
-});
 
-btnForecast14.addEventListener("click", () => {
-    updateForecastButtonsActiveState(14);
-    if (selectedCity) {
-        renderForecast(weatherCache[selectedCity.name], 14);
-        activateForecastClicks();
-    }
-});
+
 /* --------------------------------------------------------------------------
    14. DÉTAIL JOUR (graphiques température / pluie / vent)
 -------------------------------------------------------------------------- */
@@ -2134,10 +2183,12 @@ if (radarSummaryButton) {
 
 function init() {
   loadSavedCities();
-  applyTheme();
+  // applyTheme(); ❌ inutile ici
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  init();
+
   if (dayOverlay) {
     dayOverlay.classList.remove("active", "active-day-overlay");
   }
@@ -2456,75 +2507,14 @@ function applyWeatherAnimations(j) {
   if (isSun)   sun.style.opacity   = 1;
 }
 
-
-function updateRadarClock(isoTime, timezone) {
-  const el = document.getElementById("radar-clock");
-  if (!el || !isoTime) return;
-  try {
-    const d = new Date(isoTime);
-    const opts = { hour: '2-digit', minute: '2-digit', timeZone: timezone || 'UTC' };
-    el.textContent = new Intl.DateTimeFormat('fr-FR', opts).format(d);
-  } catch(e) {}
-}
-
-
-
 /* -------------------------------------------------
    HORLOGE LOCALE AUTO (mise à jour continue)
 ------------------------------------------------- */
 let radarClockTimer = null;
 
-function startRadarClock(timezone) {
-  const el = document.getElementById("radar-clock");
-  if (!el || !timezone) return;
-
-  if (radarClockTimer) clearInterval(radarClockTimer);
-
-  const update = () => {
-    try {
-      const now = new Date();
-      const local = new Date(
-        now.toLocaleString("en-US", { timeZone: timezone })
-      );
-      const h = String(local.getHours()).padStart(2, "0");
-      const m = String(local.getMinutes()).padStart(2, "0");
-      el.textContent = `${h}:${m}`;
-    } catch (e) {}
-  };
-
-  update();
-  radarClockTimer = setInterval(update, 30000); // toutes les 30 secondes
-}
-
 
 /* ================= HORLOGE LOCALE (SAFE PATCH) ================= */
 let __radarClockTimerSafe = null;
-function startRadarClockSafe(timezone) {
-  const el = document.getElementById("radar-clock");
-  if (!el || !timezone) return;
-
-  if (__radarClockTimerSafe) clearInterval(__radarClockTimerSafe);
-
-  const tick = () => {
-    try {
-      const now = new Date();
-      const local = new Date(
-        now.toLocaleString("en-US", { timeZone: timezone })
-      );
-      const h = String(local.getHours()).padStart(2, "0");
-      const m = String(local.getMinutes()).padStart(2, "0");
-      el.textContent = `${h}:${m}`;
-    } catch (e) {}
-  };
-
-  tick();
-  __radarClockTimerSafe = setInterval(tick, 30000);
-}
-
-
-/* --------------------------------------------------------------------------
-   Heure locale + thème auto basé sur la ville sélectionnée
--------------------------------------------------------------------------- */
 
 
 
@@ -2562,69 +2552,11 @@ function suggestNearbyCity(currentLat, currentLon) {
       "action",
       {
         label: "Oui",
-        onClick: () => selectCity(closest)
+        onClick: () => loadCityWeather(closest)
       }
     );
   }
 }
-
-/* @PATCH Prévisions 24h – ajout non destructif */
-(function(){
-  const btnAddCityHeader = document.getElementById("btn-add-city");
-  const addCityPanel = document.getElementById("add-city-panel");
-  const cityInput = document.getElementById("city-input");
-  if (btnAddCityHeader && addCityPanel && cityInput){
-    btnAddCityHeader.addEventListener("click", ()=>{
-      addCityPanel.scrollIntoView({behavior:"smooth",block:"center"});
-      setTimeout(()=>cityInput.focus(),200);
-    });
-  }
-
-  const btn24h = document.getElementById("btn-24h");
-  if (!btn24h) return;
-
-  function openNext24Hours(){
-    if (typeof lastForecastData === "undefined" || !lastForecastData || !selectedCity){
-      if (typeof showToast === "function") showToast("Ajoute d'abord une ville.", "info");
-      return;
-    }
-    if (typeof dayOverlay === "undefined") return;
-
-    const h = lastForecastData.hourly;
-    const now = new Date();
-    const end = new Date(now.getTime()+24*3600*1000);
-    const times = h.time.map(t=>new Date(t));
-
-    const hours=[], temps=[], rains=[], winds=[], humidities=[];
-    for(let i=0;i<times.length;i++){
-      if(times[i]>=now && times[i]<=end){
-        hours.push(times[i].getHours());
-        temps.push(h.temperature_2m[i]);
-        rains.push(h.precipitation[i]);
-        winds.push(h.wind_speed_10m[i]);
-        if (h.relative_humidity_2m) humidities.push(h.relative_humidity_2m[i]);
-      }
-    }
-    if(!hours.length){
-      for(let i=0;i<Math.min(24,times.length);i++){
-        hours.push(times[i].getHours());
-        temps.push(h.temperature_2m[i]);
-        rains.push(h.precipitation[i]);
-        winds.push(h.wind_speed_10m[i]);
-        if (h.relative_humidity_2m) humidities.push(h.relative_humidity_2m[i]);
-      }
-    }
-    currentDaySeries = {hours,temps,rains,winds,humidities};
-    if (typeof setActiveDayTab === "function") setActiveDayTab("temp");
-    if (typeof dayOverlayTitle!=="undefined") dayOverlayTitle.textContent = `Prochaines 24 h · ${selectedCity.name}`;
-    if (typeof dayOverlaySubtitle!=="undefined"){
-      dayOverlaySubtitle.textContent = `De ${now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})} à ${end.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`;
-    }
-    dayOverlay.classList.add("active");
-    document.body.classList.add("no-scroll");
-  }
-  btn24h.addEventListener("click", openNext24Hours);
-})();
 
 
 /* @PATCH AddCityPopup – popup réutilisant le panneau existant */
@@ -2702,48 +2634,8 @@ function updateAddCityButtonVisibility() {
 }
 }
 
-// ===== PATCH 24H TIMELINE TOGGLE =====
-const _btn24h = document.getElementById("btn-24h");
-const _timeline24h = document.getElementById("timeline-24h");
-
-if (_btn24h && _timeline24h) {
-  _btn24h.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!lastForecastData) return;
-
-    _timeline24h.classList.toggle("hidden");
-    if (!_timeline24h.classList.contains("hidden")) {
-      renderTimeline24h(lastForecastData);
-    }
-  });
-}
 // ====================================
 
-
-// ===============================
-// ✅ FINAL LOGIQUE : MAJ AU CLIC VILLE
-// ===============================
-
-// point d'entrée UNIQUE quand on choisit une ville
-async function selectCity(city) {
-  if (!city || !city.lat || !city.lon) return;
-  await loadCityWeather(city.lat, city.lon, city.name);
-}
-
-// surcharge sécurisée du click sur une ville
-document.addEventListener("click", e => {
-  const cityEl = e.target.closest("[data-lat][data-lon]");
-  if (!cityEl) return;
-
-  const city = {
-    name: cityEl.dataset.name || "",
-    lat: cityEl.dataset.lat,
-    lon: cityEl.dataset.lon
-  };
-
-  selectCity(city);
-});
 // === Flèches de scroll pour la timeline 24h ===
 document.addEventListener("DOMContentLoaded", () => {
   const timeline = document.getElementById("timeline-24h");
@@ -2787,5 +2679,34 @@ document.addEventListener("DOMContentLoaded", () => {
     timeline.scrollBy({ left: scrollAmount, behavior: "smooth" });
   });
 });
+/* ===============================
+   ☀️ SUN ARC — RAFRAÎCHISSEMENT CONTINU
+================================ */
+let sunArcTimer = null;
+
+function startSunArcLoop() {
+  if (sunArcTimer) return;
+
+  // affichage immédiat SI prêt
+  if (
+    selectedCity &&
+    selectedCity.sunrise &&
+    selectedCity.sunset &&
+    typeof selectedCity.utcOffset === "number"
+  ) {
+    updateSunArc(selectedCity);
+  }
+
+  sunArcTimer = setInterval(() => {
+    if (
+      selectedCity &&
+      selectedCity.sunrise &&
+      selectedCity.sunset &&
+      typeof selectedCity.utcOffset === "number"
+    ) {
+      updateSunArc(selectedCity);
+    }
+  }, 60 * 1000);
+}
 
 
