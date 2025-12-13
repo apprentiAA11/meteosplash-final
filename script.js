@@ -1135,7 +1135,12 @@ function open24hOverlay() {
 }
 
 function renderForecast(j, days) {
-  if (!selectedCity) return;
+  const forecastList = document.getElementById("forecast-list");
+  if (!forecastList) {
+    console.warn("forecast-list introuvable");
+    return;
+  }
+   if (!selectedCity) return;
 
   const data = weatherCache[selectedCity.name];
   if (!data || !data.daily) return;
