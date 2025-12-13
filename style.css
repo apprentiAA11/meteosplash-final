@@ -2978,4 +2978,15 @@ body.theme-night .city-item-active {
 #sun-dot {
   filter: drop-shadow(0 0 6px rgba(255, 200, 80, 0.7));
 }
+/* 🔒 FIX GLOBAL — les backdrops ne doivent cliquer QUE quand actifs */
+.overlay-backdrop {
+  pointer-events: none;
+}
+
+/* seulement quand l’overlay est ouvert */
+.search-overlay.active .overlay-backdrop,
+.radar-overlay.active .overlay-backdrop,
+.day-overlay.active .overlay-backdrop {
+  pointer-events: auto;
+}
 
