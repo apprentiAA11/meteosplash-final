@@ -3004,4 +3004,77 @@ body.theme-night .city-item-active {
   display: block;
   overflow-y: auto;
 }
+/* =========================================================
+   TOOLTIP PRÉVISIONS — VERSION FIGÉE & FIABLE
+   ========================================================= */
+
+.forecast-icon {
+  position: relative;
+  cursor: default;
+}
+
+/* bulle */
+.forecast-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 135%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+/* flèche */
+.forecast-icon::before {
+  content: "";
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  width: 10px;
+  height: 6px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 49;
+}
+
+/* HOVER */
+.forecast-icon:hover::after,
+.forecast-icon:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ======================
+   MODE JOUR
+   ====================== */
+body:not(.theme-night) .forecast-icon::after {
+  background: rgba(255, 255, 255, 0.96);
+  color: #111827;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+body:not(.theme-night) .forecast-icon::before {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+/* ======================
+   MODE NUIT
+   ====================== */
+body.theme-night .forecast-icon::after {
+  background: rgba(12, 14, 40, 0.96);
+  color: #f5f6ff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+body.theme-night .forecast-icon::before {
+  background: rgba(12, 14, 40, 0.96);
+}
 
