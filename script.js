@@ -6,10 +6,16 @@
 /* --------------------------------------------------------------------------
    1. SELECTEURS + ÉTATS GLOBAUX
 --------------------------------------------------------------------------- */
+let dynamicBgTimer = null;
 let hasValidLocation = false;
 let cityLocalHour = null;
 let citySunriseHour = null;
 let citySunsetHour = null;
+const btn24h = document.getElementById("btn-24h");
+const timeline24h = document.getElementById("timeline-24h");
+const btnForecast7 = document.getElementById("btn-forecast-7");
+const btnForecast14 = document.getElementById("btn-forecast-14");
+
 
 const cityInput = document.getElementById("city-input");
 const autocompleteList = document.getElementById("autocomplete-list");
@@ -67,9 +73,6 @@ const dayGraphRain = document.getElementById("chart-rain");
 const dayGraphWind = document.getElementById("chart-wind");
 const dayGraphHumidity = document.getElementById("chart-humidity");
 
-const btnForecast7 = document.getElementById("btn-forecast-7");
-const btnForecast14 = document.getElementById("btn-forecast-14");
-
 let selectedCity = null;
 let weatherCache = {};
 let cities = [];
@@ -80,10 +83,23 @@ let currentDaySeries = null;
    2. UTILITAIRES
 -------------------------------------------------------------------------- */
 
-function getHourFromLocalISO(iso) {
+function getHourFromLocalISO(iso, offsetSeconds) {
   if (!iso) return null;
-  const d = new Date(iso);
-  return d.getHours() + d.getMinutes() / 60;
+
+  // Open-Meteo renvoie souvent des ISO sans timezone.
+  // On les traite comme UTC, puis on applique l'offset de la ville pour obtenir "l'heure locale ville".
+  let off = offsetSeconds;
+  if (typeof off !== "number") {
+    if (selectedCity && typeof selectedCity.utcOffset === "number") off = selectedCity.utcOffset;
+    else if (lastForecastData && typeof lastForecastData.utc_offset_seconds === "number") off = lastForecastData.utc_offset_seconds;
+    else off = 0;
+  }
+
+  const utcMs = Date.parse(iso + "Z");
+  const cityMs = utcMs + off * 1000;
+  const d = new Date(cityMs);
+
+  return d.getUTCHours() + d.getUTCMinutes() / 60;
 }
 
 function degreeToCardinal(angle) {
@@ -116,6 +132,45 @@ function updateRadarClockFromISO(iso, utcOffsetSeconds) {
 function formatDayShort(dateStr) {
   const date = new Date(dateStr);
   return date.toLocaleDateString("fr-FR", { weekday: "short" });
+}
+function renderTimeline24h(j) {
+  if (!timeline24h || !j?.hourly) return;
+
+  timeline24h.innerHTML = "";
+
+  const now = new Date();
+  const times = j.hourly.time;
+  const temps = j.hourly.temperature_2m;
+  const codes = j.hourly.weather_code;
+
+  let shown = 0;
+
+  for (let i = 0; i < times.length && shown < 24; i++) {
+    const t = new Date(times[i]);
+    if (t < now) continue;
+
+    const item = document.createElement("div");
+    item.className = "hour-item";
+
+    item.innerHTML = `
+      <div class="hour-time">${t.getHours()}h</div>
+      <div class="hour-icon">${getWeatherIcon(codes[i])}</div>
+      <div class="hour-temp">${Math.round(temps[i])}°</div>
+    `;
+
+    timeline24h.appendChild(item);
+    shown++;
+  }
+}
+function getWeatherIcon(code) {
+  if (code === 0) return "☀️";
+  if ([1,2].includes(code)) return "🌤";
+  if (code === 3) return "☁️";
+  if ([45,48].includes(code)) return "🌫";
+  if ([51,53,55,61,63,65,80,81,82].includes(code)) return "🌧";
+  if ([71,73,75,77].includes(code)) return "❄️";
+  if ([95,96,99].includes(code)) return "⛈";
+  return "•";
 }
 
 // v6.7 — util ville (comparaison robuste)
@@ -202,51 +257,6 @@ function applyWeatherBackground(code) {
    4. THÈME JOUR / NUIT / AUTO
 -------------------------------------------------------------------------- */
 
-function applyTheme() {
-  const body = document.body;
-
-  if (themeMode === "auto") {
-
-    const hour =
-      typeof cityLocalHour === "number"
-        ? cityLocalHour
-        : new Date().getHours();
-
-    let isNight;
-    if (citySunriseHour !== null && citySunsetHour !== null) {
-      isNight = hour < citySunriseHour || hour >= citySunsetHour;
-    } else {
-      isNight = hour >= 21 || hour < 7;
-    }
-
-    const baseTheme = isNight ? "theme-night" : "theme-day";
-
-    if (
-      !body.classList.contains("weather-clear") &&
-      !body.classList.contains("weather-cloudy") &&
-      !body.classList.contains("weather-rain") &&
-      !body.classList.contains("weather-snow") &&
-      !body.classList.contains("weather-storm")
-    ) {
-      body.classList.remove("theme-day", "theme-night");
-      body.classList.add(baseTheme);
-;
-    } else {
-      body.classList.remove("theme-day", "theme-night");
-      body.classList.add(baseTheme);
-    }
-
-  } else if (themeMode === "day") {
-    body.classList.remove("theme-night");
-    body.classList.add("theme-day");
-
-  } else if (themeMode === "night") {
-    body.classList.remove("theme-day");
-    body.classList.add("theme-night");
-  }
-}
-
-
 if (btnThemeToggle) {
   btnThemeToggle.addEventListener("click", () => {
     if (themeMode === "auto") {
@@ -255,14 +265,52 @@ if (btnThemeToggle) {
     } else if (themeMode === "day") {
       themeMode = "night";
       btnThemeToggle.textContent = "🌙 Nuit";
-    } else if (themeMode === "night") {
+    } else {
       themeMode = "auto";
       btnThemeToggle.textContent = "🌓 Auto";
     }
-    applyTheme();
-  }); // ✅ FERMETURE MANQUANTE
+
+    // 💾 Sauvegarde du choix utilisateur
+    localStorage.setItem("themeMode", themeMode);
+
+    applyThemeMode();
+  });
 }
 
+function applyThemeMode() {
+  const body = document.body;
+
+  if (themeMode === "day") {
+    body.classList.add("theme-day");
+    body.classList.remove("theme-night");
+    return;
+  }
+
+  if (themeMode === "night") {
+    body.classList.add("theme-night");
+    body.classList.remove("theme-day");
+    return;
+  }
+
+  // 🌗 MODE AUTO — UNE SEULE SOURCE DE VÉRITÉ
+  applyThemeAuto();
+}
+
+function applyThemeAuto() {
+  if (
+    typeof cityLocalHour !== "number" ||
+    typeof citySunriseHour !== "number" ||
+    typeof citySunsetHour !== "number"
+  ) return;
+
+  const body = document.body;
+  const isNight =
+    cityLocalHour < citySunriseHour ||
+    cityLocalHour >= citySunsetHour;
+
+  body.classList.toggle("theme-night", isNight);
+  body.classList.toggle("theme-day", !isNight);
+}
 
 /* --------------------------------------------------------------------------
    v6.7 (I) — Arc solaire (lever/coucher + position)
@@ -548,13 +596,15 @@ async function geolocateByIp() {
     suggestNearbyCity(lat, lon); // ✅ maintenant OK
 
     setGeolocateSuccess(j.city);
-  } catch (err) {
-  console.error("Erreur géoloc IP", err);
-  if (!hasValidLocation) {
-    setGeolocateError("Impossible de déterminer votre position.");
-  }
+  } 
+   catch (err) {
+     console.error("Erreur géoloc IP", err);
+      if (!hasValidLocation) {
+        setGeolocateError("Impossible de déterminer votre position.");
+   }
+ }
 }
-}
+
 
 
 if (btnGeolocate) {
@@ -802,12 +852,17 @@ async function loadCityWeather(ci) {
       "&timezone=auto";
 
     const r = await fetch(url);
+    if (!r.ok) throw new Error("Open-Meteo KO");
     const j = await r.json();
 
     /* ☀️ Sunrise / Sunset (ISO local ville) */
     if (j.daily?.sunrise && j.daily?.sunset) {
       ci.sunrise = j.daily.sunrise[0];
-      ci.sunset  = j.daily.sunset[0];
+ci.sunset  = j.daily.sunset[0];
+
+citySunriseHour = getHourFromLocalISO(ci.sunrise);
+citySunsetHour  = getHourFromLocalISO(ci.sunset);
+
     } else {
       ci.sunrise = null;
       ci.sunset  = null;
@@ -816,6 +871,10 @@ async function loadCityWeather(ci) {
     weatherCache[ci.name] = j;
     lastForecastData = j;
 
+    /* =========================
+       RENDUS MÉTÉO
+    ========================= */
+    renderTimeline24h(j);
     renderCurrent(j);
     renderWind(j);
     applyRainFX(j);
@@ -824,13 +883,39 @@ async function loadCityWeather(ci) {
     renderCityList();
     updateTip(j);
 
-    /* ⏰ heure locale correcte */
+    /* =========================
+       ⏰ HEURE LOCALE + THÈME
+    ========================= */
     ci.utcOffset = j.utc_offset_seconds;
     updateCityClockFromOffset(j.utc_offset_seconds);
 
-    /* ☀️ soleil (UN SEUL APPEL) */
-    updateSunArc(ci);
+    // 🌗 Thème Auto / Jour / Nuit (UNE SEULE SOURCE DE VÉRITÉ)
+    applyThemeMode();
 
+    /* =========================
+       ☀️ SOLEIL
+    ========================= */
+    updateSunArc(ci);
+    startSunArcLoop();
+
+    /* =========================
+       🌗 BACKGROUND ÉVOLUTIF
+    ========================= */
+    applyDynamicBackground(ci, j.current.weather_code);
+
+    if (dynamicBgTimer) clearInterval(dynamicBgTimer);
+    dynamicBgTimer = setInterval(() => {
+      if (selectedCity && weatherCache[selectedCity.name]) {
+        applyDynamicBackground(
+          selectedCity,
+          weatherCache[selectedCity.name].current.weather_code
+        );
+      }
+    }, 60000);
+
+    /* =========================
+       📆 PRÉVISIONS
+    ========================= */
     updateForecastButtonsActiveState(7);
     renderForecast(j, 7);
     activateForecastClicks();
@@ -838,8 +923,6 @@ async function loadCityWeather(ci) {
   } catch (err) {
     console.error("Erreur météo", err);
   }
-
-  startSunArcLoop();
 }
 
 /* --------------------------------------------------------------------------
@@ -950,54 +1033,137 @@ if (btnForecast14) {
 });
 }
 
-const btn24h = document.getElementById("btn-24h");
-const timeline24h = document.getElementById("timeline-24h");
 
-if (btn24h && timeline24h) {
-  btn24h.addEventListener("click", () => {
-    if (!lastForecastData) return;
+if (btn24h) {
+  btn24h.addEventListener("click", (e) => {
+    if (!lastForecastData || !selectedCity) return;
 
-    timeline24h.classList.toggle("hidden");
-
-    if (!timeline24h.classList.contains("hidden")) {
-      renderTimeline24h(lastForecastData);
+    // ✅ Clic normal : ouvre le popup "Prochaines 24 h" (graphiques)
+    // 💡 Shift+clic : garde l'ancien comportement (afficher/masquer la timeline 24h sous le titre)
+    if (e && e.shiftKey && timeline24h) {
+      timeline24h.classList.toggle("hidden");
+      if (!timeline24h.classList.contains("hidden")) {
+        renderTimeline24h(lastForecastData);
+      }
+      return;
     }
+
+    open24hOverlay();
   });
 }
 
-function renderForecast(j, days = 7) {
+/* --------------------------------------------------------------------------
+   14-bis. POPUP "PROCHAINES 24H" (réutilise l'overlay détail jour)
+--------------------------------------------------------------------------- */
+
+function isoToCityMs(iso, offsetSeconds) {
+  // Open-Meteo renvoie des ISO sans timezone. On les traite comme UTC puis on applique l'offset ville.
+  // Exemple: "2025-12-13T21:00" -> Date.parse("2025-12-13T21:00Z") + offset
+  const utcMs = Date.parse(iso + "Z");
+  return utcMs + (offsetSeconds || 0) * 1000;
+}
+
+function formatCityHMFromMs(cityMs) {
+  const d = new Date(cityMs);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function findBaseIndexForNow(timesIso, offsetSeconds) {
+  if (!Array.isArray(timesIso) || !timesIso.length) return 0;
+
+  const nowUtcMs = Date.now() + new Date().getTimezoneOffset() * 60000;
+  const nowCityMs = nowUtcMs + (offsetSeconds || 0) * 1000;
+
+  // On prend la première heure >= maintenant (tolérance -30 min)
+  const tolMs = 30 * 60 * 1000;
+  for (let i = 0; i < timesIso.length; i++) {
+    const tCityMs = isoToCityMs(timesIso[i], offsetSeconds);
+    if (tCityMs >= nowCityMs - tolMs) return i;
+  }
+  return Math.max(0, timesIso.length - 24);
+}
+
+function open24hOverlay() {
+  if (!lastForecastData || !selectedCity || !dayOverlay) return;
+
+  const h = lastForecastData.hourly;
+  if (!h || !Array.isArray(h.time) || !h.time.length) return;
+
+  const offsetSeconds =
+    typeof selectedCity.utcOffset === "number"
+      ? selectedCity.utcOffset
+      : (typeof lastForecastData.utc_offset_seconds === "number" ? lastForecastData.utc_offset_seconds : 0);
+
+  const baseIndex = findBaseIndexForNow(h.time, offsetSeconds);
+
+  const hours = [];
+  const temps = [];
+  const rains = [];
+  const winds = [];
+  const humidities = [];
+
+  const max = Math.min(baseIndex + 24, h.time.length);
+  for (let i = baseIndex; i < max; i++) {
+    const cityMs = isoToCityMs(h.time[i], offsetSeconds);
+    hours.push(new Date(cityMs).getUTCHours()); // ✅ heure locale ville
+    if (Array.isArray(h.temperature_2m)) temps.push(h.temperature_2m[i]);
+    if (Array.isArray(h.precipitation)) rains.push(h.precipitation[i]);
+    else if (Array.isArray(h.rain)) rains.push(h.rain[i]);
+    else rains.push(0);
+    if (Array.isArray(h.wind_speed_10m)) winds.push(h.wind_speed_10m[i]);
+    if (Array.isArray(h.relative_humidity_2m)) humidities.push(Math.min(100, h.relative_humidity_2m[i]));
+  }
+
+  // Titre / sous-titre comme sur ta capture
+  if (dayOverlayTitle) {
+    dayOverlayTitle.textContent = `Prochaines 24 h • ${selectedCity.name}`;
+  }
+  if (dayOverlaySubtitle) {
+    const fromMs = isoToCityMs(h.time[baseIndex], offsetSeconds);
+    const toMs = isoToCityMs(h.time[Math.max(baseIndex, max - 1)], offsetSeconds);
+    dayOverlaySubtitle.textContent = `De ${formatCityHMFromMs(fromMs)} à ${formatCityHMFromMs(toMs)}`;
+  }
+
+  // On réutilise les mêmes onglets/canvas de l'overlay jour
+  currentDaySeries = { hours, temps, rains, winds, humidities };
+  setActiveDayTab("temp");
+
+  dayOverlay.classList.add("active");
+  document.body.classList.add("no-scroll");
+}
+
+function renderForecast(j, days) {
+  if (!selectedCity) return;
+
+  const data = weatherCache[selectedCity.name];
+  if (!data || !data.daily) return;
+
+  const d = data.daily;
+
   if (!forecastList) return;
-  const d = j.daily;
-  // lastForecastData = j; ❌ pas nécessaire ici
-
-
   forecastList.innerHTML = "";
 
-  for (let i = 0; i < days; i++) {
-    const day = d.time[i];
-    const code = d.weather_code[i];
-    const tmax = d.temperature_2m_max[i];
-    const tmin = d.temperature_2m_min[i];
-    const rain = d.precipitation_sum[i];
-    const prob = d.precipitation_probability_max[i];
-    const wind = d.wind_speed_10m_max[i];
+  const count = Math.min(days, d.time.length);
 
-    const item = document.createElement("div");
-    item.className = "forecast-item";
-    item.dataset.dayIndex = i;
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement("div");
+    row.className = "forecast-row";
 
-    item.innerHTML = `
-      <div class="forecast-line">
-        <span class="f-day">${formatDayShort(day)} ${new Date(day).getDate()}</span>
-        <span class="f-wind">${wind} km/h</span>
-        <span class="f-icon" data-tooltip="${labelForWeatherCode(code)}">${iconForWeatherCode(code)}</span>
-        <span class="f-temps">Max ${tmax}° · Min ${tmin}°</span>
-        <span class="f-rain">${rain} mm</span>
-        <span class="f-prob">${prob}%</span>
-      </div>
+    row.innerHTML = `
+      <span class="forecast-day">${formatDay(d.time[i])}</span>
+      <span class="forecast-icon">${getWeatherIcon(d.weather_code[i])}</span>
+      <span class="forecast-temp">
+        Max ${d.temperature_2m_max[i].toFixed(1)}° · 
+        Min ${d.temperature_2m_min[i].toFixed(1)}°
+      </span>
+      <span class="forecast-rain">
+        ${d.precipitation_sum[i] ?? 0} mm · ${d.precipitation_probability_max[i] ?? 0}%
+      </span>
     `;
 
-    forecastList.appendChild(item);
+    forecastList.appendChild(row);
   }
 }
 
@@ -2184,6 +2350,10 @@ if (radarSummaryButton) {
 function init() {
   loadSavedCities();
   // applyTheme(); ❌ inutile ici
+  const savedTheme = localStorage.getItem("themeMode");
+  if (savedTheme === "day" || savedTheme === "night" || savedTheme === "auto") {
+   themeMode = savedTheme;
+}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -2708,5 +2878,48 @@ function startSunArcLoop() {
     }
   }, 60 * 1000);
 }
+if (btn24h && timeline24h) {
+  btn24h.addEventListener("click", () => {
+    timeline24h.classList.toggle("hidden");
+  });
+}
+/* === PATCH Background évolutif — logique jour/nuit === */
+function clamp01(x){return Math.max(0,Math.min(1,x));}
 
+function getDayPhase(now,sunrise,sunset){
+  if(now>=sunrise-0.75 && now<sunrise+0.75) return "dawn";
+  if(now>=sunrise+0.75 && now<sunset-1) return "day";
+  if(now>=sunset-1 && now<sunset+0.75) return "dusk";
+  return "night";
+}
 
+function getPhaseRatio(now,phase,sunrise,sunset){
+  let start,end;
+  if(phase==="dawn"){start=sunrise-0.75;end=sunrise+0.75;}
+  else if(phase==="day"){start=sunrise+0.75;end=sunset-1;}
+  else if(phase==="dusk"){start=sunset-1;end=sunset+0.75;}
+  else return 0;
+  return clamp01((now-start)/(end-start));
+}
+
+function computeSkyParams(phase,ratio){
+  if(phase==="dawn") return {light:0.6+0.4*ratio,warmth:0.4+0.3*ratio,sat:0.9};
+  if(phase==="day") return {light:1,warmth:0.2,sat:1};
+  if(phase==="dusk") return {light:1-0.4*ratio,warmth:0.5,sat:0.85};
+  return {light:0.45,warmth:0,sat:0.8};
+}
+
+function applyDynamicBackground(ci,weatherCode){
+  if(!ci||typeof cityLocalHour!=="number") return;
+  const phase=getDayPhase(cityLocalHour,citySunriseHour,citySunsetHour);
+  const ratio=getPhaseRatio(cityLocalHour,phase,citySunriseHour,citySunsetHour);
+  const p=computeSkyParams(phase,ratio);
+  let dim=1;
+  if([61,63,65,80,81,82].includes(weatherCode)) dim=0.92;
+  if([71,73,75].includes(weatherCode)) dim=1.05;
+  if([95,96,99].includes(weatherCode)) dim=0.85;
+  const r=document.documentElement;
+  r.style.setProperty("--sky-light",(p.light*dim).toFixed(2));
+  r.style.setProperty("--sky-sat",p.sat.toFixed(2));
+  r.style.setProperty("--sky-warmth",p.warmth.toFixed(2));
+}
