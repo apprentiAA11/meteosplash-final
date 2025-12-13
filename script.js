@@ -129,10 +129,15 @@ function updateRadarClockFromISO(iso, utcOffsetSeconds) {
   el.textContent = `${h}:${m}`;
 }
 
-function formatDayShort(dateStr) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("fr-FR", { weekday: "short" });
+function formatDay(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "numeric"
+  });
 }
+
 function renderTimeline24h(j) {
   if (!timeline24h || !j?.hourly) return;
 
@@ -163,15 +168,26 @@ function renderTimeline24h(j) {
   }
 }
 function getWeatherIcon(code) {
+  if (code == null) return "❓";
+  // Clair
   if (code === 0) return "☀️";
-  if ([1,2].includes(code)) return "🌤";
+  // Peu nuageux
+  if ([1, 2].includes(code)) return "🌤";
+  // Couvert
   if (code === 3) return "☁️";
-  if ([45,48].includes(code)) return "🌫";
-  if ([51,53,55,61,63,65,80,81,82].includes(code)) return "🌧";
-  if ([71,73,75,77].includes(code)) return "❄️";
-  if ([95,96,99].includes(code)) return "⛈";
+  // Brouillard
+  if ([45, 48].includes(code)) return "🌫";
+  // Pluie / averses
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "🌧";
+  // Pluie verglaçante
+  if ([56, 57, 66, 67].includes(code)) return "🌧❄️";
+  // Neige
+  if ([71, 73, 75, 77].includes(code)) return "❄️";
+  // Orages
+  if ([95, 96, 99].includes(code)) return "⛈";
   return "•";
 }
+
 
 // v6.7 — util ville (comparaison robuste)
 function isSameCity(a, b) {
@@ -831,11 +847,12 @@ function updateCityClockFromOffset(offsetSeconds) {
 
   cityLocalHour = local.getHours() + local.getMinutes() / 60;
 
-  applyTheme();
+  // ❌ PLUS JAMAIS de thème ici
 }
 
-/* 🌍 Chargement météo */
+/* 🌍 Chargement météo — VERSION PRO STABLE */
 async function loadCityWeather(ci) {
+  // 🔒 définir la ville sélectionnée (source unique)
   selectedCity = cities.find(c => isSameCity(c, ci)) || ci;
 
   detailsTitle.textContent = ci.name;
@@ -855,24 +872,29 @@ async function loadCityWeather(ci) {
     if (!r.ok) throw new Error("Open-Meteo KO");
     const j = await r.json();
 
-    /* ☀️ Sunrise / Sunset (ISO local ville) */
+    /* =========================
+       ☀️ LEVER / COUCHER
+    ========================= */
     if (j.daily?.sunrise && j.daily?.sunset) {
       ci.sunrise = j.daily.sunrise[0];
-ci.sunset  = j.daily.sunset[0];
+      ci.sunset  = j.daily.sunset[0];
 
-citySunriseHour = getHourFromLocalISO(ci.sunrise);
-citySunsetHour  = getHourFromLocalISO(ci.sunset);
-
+      citySunriseHour = getHourFromLocalISO(ci.sunrise);
+      citySunsetHour  = getHourFromLocalISO(ci.sunset);
     } else {
       ci.sunrise = null;
       ci.sunset  = null;
+      citySunriseHour = null;
+      citySunsetHour  = null;
     }
 
+    /* =========================
+       📦 CACHE MÉTÉO
+    ========================= */
     weatherCache[ci.name] = j;
-    lastForecastData = j;
 
     /* =========================
-       RENDUS MÉTÉO
+       🌦️ RENDUS PRINCIPAUX
     ========================= */
     renderTimeline24h(j);
     renderCurrent(j);
@@ -889,7 +911,7 @@ citySunsetHour  = getHourFromLocalISO(ci.sunset);
     ci.utcOffset = j.utc_offset_seconds;
     updateCityClockFromOffset(j.utc_offset_seconds);
 
-    // 🌗 Thème Auto / Jour / Nuit (UNE SEULE SOURCE DE VÉRITÉ)
+    // 🌗 Thème AUTO / JOUR / NUIT (source unique)
     applyThemeMode();
 
     /* =========================
@@ -914,11 +936,10 @@ citySunsetHour  = getHourFromLocalISO(ci.sunset);
     }, 60000);
 
     /* =========================
-       📆 PRÉVISIONS
+       📆 PRÉVISIONS 7 / 14 JOURS
     ========================= */
     updateForecastButtonsActiveState(7);
-    renderForecast(j, 7);
-    activateForecastClicks();
+    renderForecast(null, 7);
 
   } catch (err) {
     console.error("Erreur météo", err);
@@ -1134,45 +1155,57 @@ function open24hOverlay() {
   document.body.classList.add("no-scroll");
 }
 
-function renderForecast(j, days) {
-  const forecastList = document.getElementById("forecast-list");
-  if (!forecastList) {
-    console.warn("forecast-list introuvable");
-    return;
-  }
-   if (!selectedCity) return;
+function formatForecastDate(dateStr) {
+  const d = new Date(dateStr);
+
+  return d.toLocaleDateString("fr-FR", {
+    weekday: "short",   // lun., mar., mer.
+    day: "numeric",     // 13
+    month: "short"      // déc.
+  });
+}
+
+function renderForecast(_, days) {
+  if (!forecastList || !selectedCity) return;
 
   const data = weatherCache[selectedCity.name];
   if (!data || !data.daily) return;
 
   const d = data.daily;
-
-  if (!forecastList) return;
   forecastList.innerHTML = "";
 
   const count = Math.min(days, d.time.length);
 
   for (let i = 0; i < count; i++) {
-    const row = document.createElement("div");
-    row.className = "forecast-row";
+    const dateISO = d.time[i]; // ✅ la vraie date
+    const div = document.createElement("div");
+    div.className = "forecast-item";
+    div.dataset.dayIndex = i;
 
-    row.innerHTML = `
-      <span class="forecast-day">${formatDay(d.time[i])}</span>
-      <span class="forecast-icon">${getWeatherIcon(d.weather_code[i])}</span>
-      <span class="forecast-temp">
-        Max ${d.temperature_2m_max[i].toFixed(1)}° · 
-        Min ${d.temperature_2m_min[i].toFixed(1)}°
-      </span>
-      <span class="forecast-rain">
-        ${d.precipitation_sum[i] ?? 0} mm · ${d.precipitation_probability_max[i] ?? 0}%
-      </span>
+    div.innerHTML = `
+      <div class="forecast-day">${formatForecastDate(dateISO)}</div>
+
+      <div class="forecast-icon">
+        ${getWeatherIcon(d.weather_code[i])}
+      </div>
+
+      <div class="forecast-temps">
+        <span class="max">${Math.round(d.temperature_2m_max[i])}°</span>
+        <span class="min">${Math.round(d.temperature_2m_min[i])}°</span>
+      </div>
+
+      <div class="forecast-rain">
+        ${d.precipitation_sum[i] ?? 0} mm
+      </div>
+
+      <div class="forecast-wind">
+        ${Math.round(d.wind_speed_10m_max[i])} km/h
+      </div>
     `;
 
-    forecastList.appendChild(row);
+    forecastList.appendChild(div);
   }
 }
-
-
 
 function activateForecastClicks() {
   const items = document.querySelectorAll(".forecast-item");
