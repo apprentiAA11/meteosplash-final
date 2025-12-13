@@ -2989,4 +2989,19 @@ body.theme-night .city-item-active {
 .day-overlay.active .overlay-backdrop {
   pointer-events: auto;
 }
+.forecast-row {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  opacity: 1 !important;
+  height: auto !important;
+}
+
+.forecast-list {
+  display: block;
+  overflow-y: auto;
+}
 
