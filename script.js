@@ -610,13 +610,14 @@ function setGeolocateError(message) {
 }
 
 async function geolocateByIp() {
-if (hasValidLocation) return; // 🔒
+  if (hasValidLocation) return;
+
   try {
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
+
     if (!j || !j.city || !j.latitude || !j.longitude) {
-      setGeolocateError("Impossible de récupérer votre position approximative.");
-      return;
+      return; // ⛔ PAS de toast rouge ici
     }
 
     const lat = j.latitude;
@@ -630,20 +631,15 @@ if (hasValidLocation) return; // 🔒
       isCurrentLocation: true,
     });
 
-    hideToast(); // ✅ efface tout message d’erreur précédent
+    setGeolocateSuccess(j.city); // 🟢 SEUL toast visible
 
-    suggestNearbyCity(lat, lon); // ✅ maintenant OK
+  } catch (err) {
+    console.error("Erreur géoloc IP", err);
 
-    setGeolocateSuccess(j.city);
-  } 
-   catch (err) {
-     console.error("Erreur géoloc IP", err);
-      if (!hasValidLocation) {
-        setGeolocateError("Impossible de déterminer votre position.");
-   }
- }
+    // 🔴 erreur finale UNIQUEMENT ici
+    setGeolocateError("Impossible de déterminer votre position.");
+  }
 }
-
 
 
 if (btnGeolocate) {
