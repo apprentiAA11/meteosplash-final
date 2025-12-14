@@ -705,11 +705,13 @@ async function onGeoSuccess(position) {
 }
 
 function onGeoError(err) {
-  console.warn("Erreur géolocalisation:", err);
-  if (hasValidLocation) return; // Ignore les erreurs si la position est déjà valide
-  // Afficher un message d'erreur plus détaillé
-  setGeolocateError(`Impossible de déterminer votre position. Erreur: ${err.message}`);
-  geolocateByIp(); // On essaie de récupérer la position via l'IP
+  console.warn("Géolocalisation navigateur refusée:", err);
+
+  if (hasValidLocation) return;
+
+  // ⛔ AUCUN toast rouge ici
+  // ✅ on bascule silencieusement vers l’IP
+  geolocateByIp();
 }
 
 /* --------------------------------------------------------------------------
