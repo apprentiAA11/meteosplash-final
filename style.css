@@ -3004,77 +3004,310 @@ body.theme-night .city-item-active {
   display: block;
   overflow-y: auto;
 }
-/* =========================================================
-   TOOLTIP PRÉVISIONS — VERSION FIGÉE & FIABLE
-   ========================================================= */
+.forecast-list,
+.forecast-item {
+  display: flex !important;
+  opacity: 1 !important;
+  min-height: 44px !important;
+}
+/* TOOLTIP PRÉVISIONS — JOUR / NUIT */
+
+body:not(.theme-night) .forecast-icon[data-tip]::after {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+
+body:not(.theme-night) .forecast-icon[data-tip]::before {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.theme-night .forecast-icon[data-tip]::after {
+  background: rgba(12, 14, 40, 0.96);
+  color: #f5f6ff;
+}
+
+body.theme-night .forecast-icon[data-tip]::before {
+  background: rgba(12, 14, 40, 0.96);
+}
+/* ===============================
+   TOOLTIP PREVISIONS
+=============================== */
 
 .forecast-icon {
   position: relative;
-  cursor: default;
+  cursor: default !important;
 }
 
 /* bulle */
 .forecast-icon::after {
   content: attr(data-tip);
   position: absolute;
-  bottom: 135%;
+  bottom: 130%;
   left: 50%;
-  transform: translateX(-50%) translateY(6px);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
+  transform: translateX(-50%);
   white-space: nowrap;
+
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 10px;
+
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease;
   z-index: 50;
 }
 
-/* flèche */
+/* petite flèche */
 .forecast-icon::before {
   content: "";
   position: absolute;
-  bottom: 125%;
+  bottom: 118%;
   left: 50%;
-  width: 10px;
-  height: 6px;
   transform: translateX(-50%);
-  border-radius: 999px;
+  border: 6px solid transparent;
   opacity: 0;
   transition: opacity 0.15s ease;
-  z-index: 49;
 }
 
-/* HOVER */
+/* affichage */
 .forecast-icon:hover::after,
 .forecast-icon:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* ===== JOUR ===== */
+body.theme-day .forecast-icon::after {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1b1440;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+body.theme-day .forecast-icon::before {
+  border-top-color: rgba(255, 255, 255, 0.95);
+}
+
+/* ===== NUIT ===== */
+body.theme-night .forecast-icon::after {
+  background: rgba(10, 13, 40, 0.96);
+  color: #eef0ff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+body.theme-night .forecast-icon::before {
+  border-top-color: rgba(10, 13, 40, 0.96);
+}
+/* FIX DÉFINITIF — AFFICHAGE PRÉVISIONS */
+.forecast-list {
+  min-height: 120px;
+}
+
+.forecast-item {
+  display: grid;
+}
+/* === Champ recherche — MODE NUIT (lisibilité renforcée) === */
+body.theme-night .ios-search-input {
+  background: rgba(28, 30, 64, 0.95);   /* fond plus clair */
+  color: #ffffff;                      /* texte blanc */
+  border: 1px solid rgba(150, 168, 255, 0.55);
+}
+
+body.theme-night .ios-search-input::placeholder {
+  color: rgba(220, 225, 255, 0.65);    /* placeholder lisible */
+}
+/* === Autocomplete — MODE NUIT === */
+body.theme-night .autocomplete-list {
+  background: rgba(24, 28, 72, 0.97);
+  border: 1px solid rgba(140, 160, 255, 0.5);
+}
+
+body.theme-night .autocomplete-list li {
+  color: #f2f4ff;
+}
+
+body.theme-night .autocomplete-list li:hover {
+  background: rgba(120, 140, 255, 0.25);
+}
+body.theme-night .autocomplete-meta {
+  color: rgba(200, 210, 255, 0.7);
+}
+/* ==========================================================
+   🔍 CHAMP AJOUT VILLE — CORRECTION LISIBILITÉ MODE NUIT
+   ========================================================== */
+
+body.theme-night .day-popup .ios-search-input {
+  background: rgba(20, 22, 48, 0.95) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(150, 170, 255, 0.45);
+}
+
+body.theme-night .day-popup .ios-search-input::placeholder {
+  color: rgba(220, 225, 255, 0.6);
+}
+
+/* Curseur visible */
+body.theme-night .day-popup .ios-search-input {
+  caret-color: #ffffff;
+}
+body.theme-night .day-popup .autocomplete-list {
+  background: rgba(24, 28, 72, 0.97) !important;
+  border: 1px solid rgba(140, 160, 255, 0.4);
+}
+
+body.theme-night .day-popup .autocomplete-list li {
+  color: #f1f3ff;
+}
+
+body.theme-night .day-popup .autocomplete-list li:hover {
+  background: rgba(120, 140, 255, 0.25);
+}
+body.theme-night .day-popup .ios-search-input:focus {
+  box-shadow:
+    0 0 0 1px rgba(150, 170, 255, 0.6),
+    0 0 18px rgba(120, 140, 255, 0.4);
+}
+body.theme-night .ios-search-input:focus {
+  box-shadow:
+    0 0 0 1px rgba(140, 160, 255, 0.6),
+    0 0 16px rgba(120, 140, 255, 0.45);
+}
+
+
+
+/* ==============================
+   TOOLTIP MÉTÉO (pro, curseur intact)
+============================== */
+.weather-tooltip {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none; /* ✅ ne bloque jamais la souris */
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  background: rgba(20, 20, 40, 0.95);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  white-space: nowrap;
+}
+.weather-tooltip.visible { opacity: 1; }
+
+body.theme-night .weather-tooltip {
+  background: rgba(220, 225, 255, 0.95);
+  color: #1b1440;
+}
+/* ==========================================================
+   ALIGNEMENT FINAL – PRÉVISIONS (SAFE GRID)
+   ========================================================== */
+
+.forecast-item {
+  display: grid;
+  grid-template-columns:
+    120px   /* jour */
+    40px    /* icône */
+    64px    /* max */
+    64px    /* min */
+    78px    /* pluie */
+    90px;   /* vent */
+
+  align-items: center;
+  column-gap: 14px;
+
+  padding: 12px 18px;
+  border-radius: 14px;
+}
+
+.forecast-day {
+  font-weight: 600;
+}
+
+.forecast-icon {
+  text-align: center;
+  font-size: 18px;
+}
+
+.forecast-temps {
+  display: flex;
+  gap: 8px;
+}
+
+.forecast-temps .max {
+  font-weight: 600;
+}
+
+.forecast-temps .min {
+  opacity: 0.6;
+}
+
+.forecast-rain,
+.forecast-wind {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+/* ===== Libellés max / min dans les prévisions ===== */
+
+.forecast-temps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.forecast-temps .max::before {
+  content: "max ";
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.forecast-temps .min::before {
+  content: "min ";
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+/* séparateur visuel entre max et min */
+.forecast-temps .min::after {
+  content: "";
+}
+
+.forecast-temps::after {
+  content: "";
+}
+.forecast-temps .max::after {
+  content: "  ·  ";
+  opacity: 0.5;
+}
+/* ==========================================================
+   TOASTS – alignés avec le JS EXISTANT
+   ========================================================== */
+
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  z-index: 9999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast-visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 
-/* ======================
-   MODE JOUR
-   ====================== */
-body:not(.theme-night) .forecast-icon::after {
-  background: rgba(255, 255, 255, 0.96);
-  color: #111827;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+.toast-success {
+  background: linear-gradient(135deg, #3ddc97, #1fa774);
 }
 
-body:not(.theme-night) .forecast-icon::before {
-  background: rgba(255, 255, 255, 0.96);
+.toast-error {
+  background: linear-gradient(135deg, #ff6b6b, #d63031);
 }
-
-/* ======================
-   MODE NUIT
-   ====================== */
-body.theme-night .forecast-icon::after {
-  background: rgba(12, 14, 40, 0.96);
-  color: #f5f6ff;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
-}
-
-body.theme-night .forecast-icon::before {
-  background: rgba(12, 14, 40, 0.96);
-}
-
