@@ -3311,3 +3311,117 @@ body.theme-night .weather-tooltip {
 .toast-error {
   background: linear-gradient(135deg, #ff6b6b, #d63031);
 }
+/* ==========================================================
+   📱 iPhone / Mobile
+   ========================================================== */
+@media (max-width: 768px) {
+
+  body {
+    font-size: 15px;
+  }
+
+  .app-shell {
+    padding: 10px;
+  }
+
+  /* Header */
+  .app-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Boutons principaux */
+  button,
+  .pill-button {
+    min-height: 44px; /* Apple guideline */
+    font-size: 15px;
+  }
+
+  /* Cartes météo */
+  .weather-card,
+  .city-card,
+  .forecast-item {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  /* Mes villes */
+  .city-item {
+    padding: 10px 12px;
+  }
+
+  .city-name {
+    font-size: 15px;
+  }
+
+  .city-temp {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Prévisions (ligne compacte mais lisible) */
+  .forecast-item {
+    grid-template-columns:
+      92px   /* jour */
+      30px   /* icône */
+      auto   /* températures */
+      52px   /* pluie */
+      60px;  /* vent */
+    column-gap: 8px;
+  }
+
+  .forecast-temps {
+    font-size: 14px;
+  }
+
+  /* Overlay 24h / jour */
+  .day-overlay {
+    padding: 12px;
+  }
+
+  /* Toast */
+  .toast {
+    width: calc(100% - 32px);
+    text-align: center;
+  }
+}
+/* ==========================================================
+   📲 iPad / Tablette
+   ========================================================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+
+  body {
+    font-size: 16px;
+  }
+
+  .app-shell {
+    padding: 14px 18px;
+  }
+
+  /* Header plus aéré */
+  .app-header {
+    gap: 14px;
+  }
+
+  /* Prévisions */
+  .forecast-item {
+    grid-template-columns:
+      110px  /* jour */
+      34px   /* icône */
+      auto   /* températures */
+      70px   /* pluie */
+      80px;  /* vent */
+    column-gap: 12px;
+  }
+
+  .forecast-temps {
+    font-size: 15px;
+  }
+
+  /* Cartes */
+  .weather-card,
+  .city-card {
+    border-radius: 18px;
+  }
+}
+
