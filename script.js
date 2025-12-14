@@ -600,7 +600,11 @@ function setGeolocateSuccess(cityName) {
 
 
 function setGeolocateError(message) {
-   if (hasValidLocation) return; // ✅ BLOQUE LE TOAST ROUGE
+  // ❌ INTERDIT au démarrage
+  if (!btnGeolocate || !btnGeolocate.classList.contains("location-loading")) {
+    return;
+  }
+
   showToast(message || "Impossible de déterminer votre position.", "error");
   setGeolocateIdle();
 }
