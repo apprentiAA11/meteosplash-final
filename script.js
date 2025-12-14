@@ -83,24 +83,17 @@ let currentDaySeries = null;
    2. UTILITAIRES
 -------------------------------------------------------------------------- */
 
-function getHourFromLocalISO(iso, offsetSeconds) {
+function getHourFromLocalISO(iso) {
   if (!iso) return null;
 
-  // Open-Meteo renvoie souvent des ISO sans timezone.
-  // On les traite comme UTC, puis on applique l'offset de la ville pour obtenir "l'heure locale ville".
-  let off = offsetSeconds;
-  if (typeof off !== "number") {
-    if (selectedCity && typeof selectedCity.utcOffset === "number") off = selectedCity.utcOffset;
-    else if (lastForecastData && typeof lastForecastData.utc_offset_seconds === "number") off = lastForecastData.utc_offset_seconds;
-    else off = 0;
-  }
-
-  const utcMs = Date.parse(iso + "Z");
-  const cityMs = utcMs + off * 1000;
-  const d = new Date(cityMs);
-
-  return d.getUTCHours() + d.getUTCMinutes() / 60;
+  // Open-Meteo renvoie sunrise/sunset en heure locale de la ville (ISO sans timezone).
+  // On ne doit PAS appliquer d'offset ici : on extrait l'heure directement de la chaîne.
+  const hh = Number(String(iso).substring(11, 13));
+  const mm = Number(String(iso).substring(14, 16));
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  return hh + mm / 60;
 }
+
 
 function degreeToCardinal(angle) {
   const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
@@ -168,7 +161,7 @@ function renderTimeline24h(j) {
   }
 }
 function getWeatherIcon(code) {
-  if (code == null) return "❓";
+  if (code == null) return "";
   // Clair
   if (code === 0) return "☀️";
   // Peu nuageux
@@ -185,9 +178,29 @@ function getWeatherIcon(code) {
   if ([71, 73, 75, 77].includes(code)) return "❄️";
   // Orages
   if ([95, 96, 99].includes(code)) return "⛈";
-  return "•";
+  return "";
 }
 
+
+function getWeatherLabel(code) {
+  if (code == null) return "";
+
+  if (code === 0) return "Ensoleillé";
+  if ([1, 2].includes(code)) return "Peu nuageux";
+  if (code === 3) return "Nuageux";
+  if ([45, 48].includes(code)) return "Brouillard";
+
+  if ([51, 53, 55].includes(code)) return "Bruine";
+  if ([61, 63, 65].includes(code)) return "Pluie";
+  if ([80, 81, 82].includes(code)) return "Averses";
+
+  if ([71, 73, 75, 77].includes(code)) return "Neige";
+
+  if ([95].includes(code)) return "Orage";
+  if ([96, 99].includes(code)) return "Orage violent";
+
+  return "Conditions météo";
+}
 
 // v6.7 — util ville (comparaison robuste)
 function isSameCity(a, b) {
@@ -566,20 +579,25 @@ function setGeolocateLoading() {
 }
 
 function setGeolocateSuccess(cityName) {
-   hasValidLocation = true; // ✅ VERROU DÉFINITIF
+  hasValidLocation = true;
+
   if (!btnGeolocate) return;
+
   btnGeolocate.disabled = false;
   btnGeolocate.classList.remove("location-loading");
   btnGeolocate.classList.add("location-success");
   btnGeolocate.textContent = "✅ Position trouvée";
+
+  // ✅ afficher le toast APRÈS l'état bouton
   if (cityName) {
-   hideToast(); // ✅ IMPORTANT
-   showToast(`Position détectée : ${cityName}`, "success");
+    showToast(`📍 Position détectée : ${cityName}`, "success");
   }
+
   setTimeout(() => {
     setGeolocateIdle();
-  }, 1200);
+  }, 1500);
 }
+
 
 function setGeolocateError(message) {
    if (hasValidLocation) return; // ✅ BLOQUE LE TOAST ROUGE
@@ -588,6 +606,7 @@ function setGeolocateError(message) {
 }
 
 async function geolocateByIp() {
+if (hasValidLocation) return; // 🔒
   try {
     const r = await fetch("https://ipapi.co/json/");
     const j = await r.json();
@@ -633,39 +652,58 @@ if (btnGeolocate) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        try {
-          const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
-          const r = await fetch(url);
-          const j = await r.json();
-          const info = j?.results?.[0];
-          const cityName =
-            info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-          const countryName = info?.country || "—";
-
-          addCity({
-            name: cityName,
-            country: countryName,
-            lat,
-            lon,
-            isCurrentLocation: true,
-          });
-          setGeolocateSuccess(cityName);
-        } catch (err) {
-          console.error("Erreur géocodage inverse", err);
-          geolocateByIp();
-        }
-      },
-      async (err) => {
-        console.warn("Erreur géolocalisation navigateur", err);
-        geolocateByIp();
-      },
+      onGeoSuccess,
+      onGeoError,
       { enableHighAccuracy: true, timeout: 7000 }
     );
   });
+}
+
+/* --------------------------------------------------------------------------
+   6-bis. CALLBACKS GÉOLOCALISATION NAVIGATEUR
+-------------------------------------------------------------------------- */
+async function onGeoSuccess(position) {
+  if (hasValidLocation) return; // 🔒 sécurité double appel
+
+  hasValidLocation = true; // 🔒 VERROU IMMÉDIAT (clé du bug)
+
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const info = j?.results?.[0];
+
+    const cityName =
+      info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+    const countryName = info?.country || "—";
+
+    addCity({
+      name: cityName,
+      country: countryName,
+      lat,
+      lon,
+      isCurrentLocation: true,
+    });
+
+    setGeolocateSuccess(cityName); // 🟢 toast + bouton vert
+
+  } catch (err) {
+    console.error("Erreur géocodage inverse", err);
+
+    // ⚠️ fallback IP UNIQUEMENT si rien n'a encore validé
+    if (!hasValidLocation) {
+      geolocateByIp();
+    }
+  }
+}
+
+function onGeoError(err) {
+  console.warn("Geo error:", err);
+  if (hasValidLocation) return;
+  geolocateByIp(); // ⬅️ on bascule DIRECT vers IP
 }
 
 /* --------------------------------------------------------------------------
@@ -939,7 +977,8 @@ async function loadCityWeather(ci) {
        📆 PRÉVISIONS 7 / 14 JOURS
     ========================= */
     updateForecastButtonsActiveState(7);
-    renderForecast(null, 7);
+    lastForecastData = j;
+    renderForecast(j, 7);
 
   } catch (err) {
     console.error("Erreur météo", err);
@@ -1166,18 +1205,16 @@ function formatForecastDate(dateStr) {
 }
 
 function renderForecast(_, days) {
-  if (!forecastList || !selectedCity) return;
+  if (!forecastList || !lastForecastData?.daily) return;
 
-  const data = weatherCache[selectedCity.name];
-  if (!data || !data.daily) return;
-
-  const d = data.daily;
+  const d = lastForecastData.daily;
   forecastList.innerHTML = "";
 
   const count = Math.min(days, d.time.length);
 
   for (let i = 0; i < count; i++) {
-    const dateISO = d.time[i]; // ✅ la vraie date
+    const dateISO = d.time[i];
+
     const div = document.createElement("div");
     div.className = "forecast-item";
     div.dataset.dayIndex = i;
@@ -1185,7 +1222,7 @@ function renderForecast(_, days) {
     div.innerHTML = `
       <div class="forecast-day">${formatForecastDate(dateISO)}</div>
 
-      <div class="forecast-icon">
+      <div class="forecast-icon" data-label="${getWeatherLabel(d.weather_code[i])}">
         ${getWeatherIcon(d.weather_code[i])}
       </div>
 
@@ -1205,16 +1242,20 @@ function renderForecast(_, days) {
 
     forecastList.appendChild(div);
   }
+
+  activateForecastClicks(); // 🔥 indispensable
 }
 
 function activateForecastClicks() {
   const items = document.querySelectorAll(".forecast-item");
-  items.forEach((item) => {
-    const idx = parseInt(item.dataset.dayIndex, 10);
-    if (Number.isNaN(idx)) return;
-    item.onclick = () => {
-      openDayOverlay(idx);
-    };
+
+  items.forEach(item => {
+    item.addEventListener("click", () => {
+      const dayIndex = Number(item.dataset.dayIndex);
+      if (isNaN(dayIndex)) return;
+
+      openDayOverlay(dayIndex);
+    });
   });
 }
 
@@ -1249,7 +1290,7 @@ function iconForWeatherCode(code) {
   if ([95].includes(code)) return "⛈️";               // orage
   if ([96, 99].includes(code)) return "🌩️";          // orage + grêle
 
-  return "❓";
+  return "";
 }
 
 function updateForecastButtonsActiveState(active) {
@@ -2384,14 +2425,57 @@ if (radarSummaryButton) {
 /* --------------------------------------------------------------------------
    17. INITIALISATION
 -------------------------------------------------------------------------- */
+async function onGeoSuccess(position) {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const info = j?.results?.[0];
+
+    const cityName =
+      info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+    const countryName = info?.country || "—";
+
+    addCity({
+      name: cityName,
+      country: countryName,
+      lat,
+      lon,
+      isCurrentLocation: true,
+    });
+
+    hideToast(); // nettoie tout message précédent
+    setGeolocateSuccess(cityName);
+
+  } catch (err) {
+    console.error("Erreur géocodage inverse", err);
+    geolocateByIp(); // fallback IP propre
+  }
+}
+
+function onGeoError(err) {
+  console.warn("Erreur géolocalisation navigateur", err);
+  geolocateByIp(); // fallback IP
+}
 
 function init() {
   loadSavedCities();
-  // applyTheme(); ❌ inutile ici
+
+  // 🔁 Charger la météo de toutes les villes sauvegardées
+  if (Array.isArray(cities) && cities.length > 0) {
+    cities.forEach(ci => {
+      loadCityWeather(ci);
+    });
+  }
+
+  // 🎨 Thème sauvegardé
   const savedTheme = localStorage.getItem("themeMode");
   if (savedTheme === "day" || savedTheme === "night" || savedTheme === "auto") {
-   themeMode = savedTheme;
-}
+    themeMode = savedTheme;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -2961,3 +3045,44 @@ function applyDynamicBackground(ci,weatherCode){
   r.style.setProperty("--sky-sat",p.sat.toFixed(2));
   r.style.setProperty("--sky-warmth",p.warmth.toFixed(2));
 }
+
+
+/* ======================================================
+   TOOLTIP MÉTÉO — proche du pointeur, curseur intact
+====================================================== */
+(function initWeatherTooltip(){
+  if (document.querySelector(".weather-tooltip")) return;
+
+  const weatherTooltip = document.createElement("div");
+  weatherTooltip.className = "weather-tooltip";
+  document.body.appendChild(weatherTooltip);
+
+  function show(text, x, y) {
+    weatherTooltip.textContent = text;
+    // ✅ à droite et légèrement en dessous (jamais coupé)
+    weatherTooltip.style.left = (x + 12) + "px";
+    weatherTooltip.style.top  = (y + 12) + "px";
+    weatherTooltip.classList.add("visible");
+  }
+
+  function hide() {
+    weatherTooltip.classList.remove("visible");
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const t = e.target.closest("[data-label]");
+    if (!t) return;
+    show(t.dataset.label || "", e.clientX, e.clientY);
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!weatherTooltip.classList.contains("visible")) return;
+    weatherTooltip.style.left = (e.clientX + 12) + "px";
+    weatherTooltip.style.top  = (e.clientY + 12) + "px";
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    if (e.target.closest("[data-label]")) hide();
+  });
+})();
+
