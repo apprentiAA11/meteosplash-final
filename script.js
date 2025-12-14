@@ -701,9 +701,11 @@ async function onGeoSuccess(position) {
 }
 
 function onGeoError(err) {
-  console.warn("Geo error:", err);
-  if (hasValidLocation) return;
-  geolocateByIp(); // ⬅️ on bascule DIRECT vers IP
+  console.warn("Erreur géolocalisation:", err);
+  if (hasValidLocation) return; // Ignore les erreurs si la position est déjà valide
+  // Afficher un message d'erreur plus détaillé
+  setGeolocateError(`Impossible de déterminer votre position. Erreur: ${err.message}`);
+  geolocateByIp(); // On essaie de récupérer la position via l'IP
 }
 
 /* --------------------------------------------------------------------------
