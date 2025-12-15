@@ -2360,7 +2360,7 @@ if (btnRadar && radarOverlay) {
 }
 
 if (btnCloseRadar) {
-  btnCloseRadar.addEventListener("click", () => {
+  const closeRadar = () => {
     radarOverlay.classList.remove("active");
     radarOverlay.classList.add("hidden");
     document.body.classList.remove("no-scroll");
@@ -2370,6 +2370,15 @@ if (btnCloseRadar) {
       radarMapInstance.removeLayer(radarFutureOverlay);
       radarFutureOverlay = null;
     }
+  };
+
+  // 🖱️ Desktop
+  btnCloseRadar.addEventListener("click", closeRadar);
+
+  // 📱 iOS (Safari + Chrome)
+  btnCloseRadar.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    closeRadar();
   });
 }
 
