@@ -3491,3 +3491,7 @@ body.theme-night .weather-tooltip {
 #radar-overlay canvas {
   z-index: 1;
 }
+/* ⚠️ iOS : le backdrop ne doit jamais bloquer le bouton */
+.radar-overlay .overlay-backdrop {
+  pointer-events: none;
+}
