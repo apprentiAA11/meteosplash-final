@@ -3484,4 +3484,9 @@ body.theme-night .weather-tooltip {
     touch-action: manipulation;
   }
 }
-
+/* Leaflet / canvas ne doit PAS bloquer le bouton */
+#radar-overlay canvas,
+#radar-overlay .leaflet-pane,
+#radar-overlay .leaflet-map-pane {
+  pointer-events: auto;
+}
