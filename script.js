@@ -818,18 +818,12 @@ if (btnReset) {
 function renderCityList() {
   if (!cityList) return;
 
-  // 🔒 mémoriser la ville sélectionnée AVANT tri
   const currentSelected = selectedCity;
-  const tempSpan = el.querySelector(".city-temp");
-  if (tempSpan && typeof tempVal === "number") {
-   tempSpan.style.color = getTempColor(tempVal);
-  }
-
   cityList.innerHTML = "";
 
-  if (sortSelect && sortSelect.value === "alpha") {
+  if (sortSelect?.value === "alpha") {
     cities.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sortSelect && sortSelect.value === "temp") {
+  } else if (sortSelect?.value === "temp") {
     cities.sort((a, b) => {
       const Ta = weatherCache[a.name]?.current?.temperature_2m ?? -9999;
       const Tb = weatherCache[b.name]?.current?.temperature_2m ?? -9999;
@@ -837,7 +831,6 @@ function renderCityList() {
     });
   }
 
-  // 🔒 restaurer la sélection APRÈS tri
   selectedCity = currentSelected;
 
   cities.forEach((ci, idx) => {
@@ -845,27 +838,26 @@ function renderCityList() {
     el.className = "city-item";
     el.dataset.index = idx;
 
-    // ✅ ville active UNIQUE
     if (selectedCity && isSameCity(ci, selectedCity)) {
       el.classList.add("city-item-active");
     }
 
-    const tempVal = weatherCache[ci.name]?.current?.temperature_2m ?? "—";
-    const badge = ci.isCurrentLocation
-      ? '<span class="city-badge-location">Ma position</span>'
-      : "";
+    const tempVal = weatherCache[ci.name]?.current?.temperature_2m;
 
     el.innerHTML = `
       <div class="city-main">
         <span class="city-name">${ci.name}</span>
-        <span class="city-meta">${ci.country} • ${ci.lat.toFixed(
-          2
-        )}, ${ci.lon.toFixed(2)}</span>
+        <span class="city-meta">${ci.country}</span>
       </div>
-      <span class="city-temp">${tempVal}°</span>
-      ${badge}
+      <span class="city-temp">${tempVal ?? "—"}°</span>
+      ${ci.isCurrentLocation ? `<span class="city-badge-location">Ma position</span>` : ""}
       <button class="city-remove">✕</button>
     `;
+
+    const tempSpan = el.querySelector(".city-temp");
+    if (tempSpan && typeof tempVal === "number") {
+      tempSpan.style.color = getTempColor(tempVal);
+    }
 
     el.addEventListener("click", (e) => {
       if (e.target.classList.contains("city-remove")) {
@@ -881,6 +873,7 @@ function renderCityList() {
 
   updateAddCityButtonVisibility();
 }
+
 
 function highlightCity(index) {
   if (!cityList) return;
