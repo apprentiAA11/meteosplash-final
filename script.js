@@ -975,15 +975,17 @@ async function loadCityWeather(ci) {
       }
     }, 60000);
 
-    /* 📆 Prévisions */
-    lastForecastData = j;                // 🔑 D’ABORD
-    enableForecastButtons();
+    /* 📆 PRÉVISIONS — SOURCE UNIQUE */
+    lastForecastData = j;
+    enableForecastButtons();             // ✅ activation UNIQUE
     updateForecastButtonsActiveState(7); // UI
     renderForecast(lastForecastData, 7); // rendu initial
+
   } catch (err) {
     console.error("Erreur météo", err);
   }
 }
+
 
 /* --------------------------------------------------------------------------
    10. AFFICHAGE METEO ACTUELLE
