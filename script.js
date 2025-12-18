@@ -916,11 +916,6 @@ async function loadCityWeather(ci) {
   detailsTitle.textContent = ci.name;
   detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)}, Lon ${ci.lon.toFixed(2)}`;
 
-  // ⛔ désactiver les boutons tant que les données ne sont pas prêtes
-  btn24h?.classList.add("disabled");
-  btnForecast7?.classList.add("disabled");
-  btnForecast14?.classList.add("disabled");
-
   try {
     const url =
       "https://api.open-meteo.com/v1/forecast" +
@@ -2470,19 +2465,23 @@ function onGeoError(err) {
 }
 
 function init() {
-  loadSavedCities();
-
-  // 🔁 Charger la météo de toutes les villes sauvegardées
-  if (Array.isArray(cities) && cities.length > 0) {
-    cities.forEach(ci => {
-      loadCityWeather(ci);
-    });
-  }
+  // ⛔ désactiver les boutons AVANT tout chargement
+  btn24h?.classList.add("disabled");
+  btnForecast7?.classList.add("disabled");
+  btnForecast14?.classList.add("disabled");
 
   // 🎨 Thème sauvegardé
   const savedTheme = localStorage.getItem("themeMode");
   if (savedTheme === "day" || savedTheme === "night" || savedTheme === "auto") {
     themeMode = savedTheme;
+  }
+
+  // 📦 villes sauvegardées
+  loadSavedCities();
+
+  // 🌍 charger la météo (la première ville suffit)
+  if (Array.isArray(cities) && cities.length > 0) {
+    loadCityWeather(cities[0]); // 🔑 UNE seule source
   }
 }
 
