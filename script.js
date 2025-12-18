@@ -1007,6 +1007,8 @@ async function loadCityWeather(ci) {
 
 
     renderForecast(lastForecastData, 7);
+    renderForecast(lastForecastData, 14);
+
 
   } catch (err) {
     console.error("Erreur météo", err);
