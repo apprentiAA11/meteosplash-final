@@ -681,6 +681,19 @@ if (btnGeolocate) {
 /* --------------------------------------------------------------------------
    6-bis. CALLBACKS GÉOLOCALISATION NAVIGATEUR
 -------------------------------------------------------------------------- */
+function loadWeatherByCoords(lat, lon) {
+  const city = {
+    name: "Ma position",
+    lat,
+    lon,
+    isLocation: true
+  };
+
+  selectedCity = city;
+
+  loadCityWeather(city);
+}
+
 async function onGeoSuccess(position) {
   if (hasValidLocation) return; // 🔒 sécurité double appel
 
