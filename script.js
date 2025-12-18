@@ -1218,11 +1218,6 @@ function formatForecastDate(dateStr) {
 
 function renderForecast(_, days) {
   if (!forecastList || !lastForecastData?.daily) return;
-  const maxEl = div.querySelector(".max");
-  const minEl = div.querySelector(".min");
-
-  if (maxEl) maxEl.style.color = getTempColor(d.temperature_2m_max[i]);
-  if (minEl) minEl.style.color = getTempColor(d.temperature_2m_min[i]);
 
   const d = lastForecastData.daily;
   forecastList.innerHTML = "";
@@ -1230,37 +1225,33 @@ function renderForecast(_, days) {
   const count = Math.min(days, d.time.length);
 
   for (let i = 0; i < count; i++) {
-    const dateISO = d.time[i];
-
     const div = document.createElement("div");
     div.className = "forecast-item";
     div.dataset.dayIndex = i;
 
     div.innerHTML = `
-      <div class="forecast-day">${formatForecastDate(dateISO)}</div>
-
+      <div class="forecast-day">${formatForecastDate(d.time[i])}</div>
       <div class="forecast-icon" data-label="${getWeatherLabel(d.weather_code[i])}">
         ${getWeatherIcon(d.weather_code[i])}
       </div>
-
       <div class="forecast-temps">
         <span class="max">${Math.round(d.temperature_2m_max[i])}°</span>
         <span class="min">${Math.round(d.temperature_2m_min[i])}°</span>
       </div>
-
-      <div class="forecast-rain">
-        ${d.precipitation_sum[i] ?? 0} mm
-      </div>
-
-      <div class="forecast-wind">
-        ${Math.round(d.wind_speed_10m_max[i])} km/h
-      </div>
+      <div class="forecast-rain">${d.precipitation_sum[i] ?? 0} mm</div>
+      <div class="forecast-wind">${Math.round(d.wind_speed_10m_max[i])} km/h</div>
     `;
+
+    const maxEl = div.querySelector(".max");
+    const minEl = div.querySelector(".min");
+
+    if (maxEl) maxEl.style.color = getTempColor(d.temperature_2m_max[i]);
+    if (minEl) minEl.style.color = getTempColor(d.temperature_2m_min[i]);
 
     forecastList.appendChild(div);
   }
 
-  activateForecastClicks(); // 🔥 indispensable
+  activateForecastClicks();
 }
 
 function activateForecastClicks() {
@@ -1466,6 +1457,7 @@ if (forecastList) {
 
 
 function drawSimpleLineChart(canvas, labels, values, unit) {
+   let color = "#ff6f61";
    if (unit === "°C") {
    color = getTempColor(
     values[Math.floor(values.length / 2)] // temp médiane
