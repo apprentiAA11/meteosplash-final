@@ -1483,7 +1483,12 @@ if (forecastList) {
 
 
 function drawSimpleLineChart(canvas, labels, values, unit) {
-  if (!canvas || !canvas.getContext || !labels.length || !values.length) {
+   if (unit === "°C") {
+   color = getTempColor(
+    values[Math.floor(values.length / 2)] // temp médiane
+   );
+   }
+   if (!canvas || !canvas.getContext || !labels.length || !values.length) {
     const ctx = canvas && canvas.getContext && canvas.getContext("2d");
     if (ctx) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
