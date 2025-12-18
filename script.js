@@ -1228,8 +1228,9 @@ function formatForecastDate(dateStr) {
   });
 }
 
-function renderForecast(_, days) {
+function renderForecast(data, days) {
   if (!forecastList || !data?.daily) return;
+
   const d = data.daily;
   forecastList.innerHTML = "";
 
