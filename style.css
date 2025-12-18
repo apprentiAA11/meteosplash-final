@@ -3755,7 +3755,6 @@ body.theme-day .compass-arrow {
 /* Mode nuit */
 body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.14);
-  opacity: 1;
 }
 /* Dernière mise à jour — mode nuit (lisible mais discret) */
 body.theme-night .last-update {
