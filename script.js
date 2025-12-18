@@ -1287,16 +1287,10 @@ function iconForWeatherCode(code) {
 function updateForecastButtonsActiveState(active) {
   if (!btnForecast7 || !btnForecast14) return;
 
-  btnForecast7.classList.toggle(
-    "pill-button-active",
-    active === 7
-  );
-
-  btnForecast14.classList.toggle(
-    "pill-button-active",
-    active === 14
-  );
+  btnForecast7.classList.toggle("pill-button-active", active === 7);
+  btnForecast14.classList.toggle("pill-button-active", active === 14);
 }
+
 function enableForecastButtons() {
   [btn24h, btnForecast7, btnForecast14].forEach(btn => {
     if (!btn) return;
