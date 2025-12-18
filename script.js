@@ -148,10 +148,6 @@ function renderTimeline24h(j) {
   if (!timeline24h || !j?.hourly) return;
 
   timeline24h.innerHTML = "";
-  const tempDiv = item.querySelector(".hour-temp");
-  if (tempDiv) {
-   tempDiv.style.color = getTempColor(temps[i]);
-  }
 
   const now = new Date();
   const times = j.hourly.time;
@@ -173,10 +169,16 @@ function renderTimeline24h(j) {
       <div class="hour-temp">${Math.round(temps[i])}°</div>
     `;
 
+    const tempDiv = item.querySelector(".hour-temp");
+    if (tempDiv) {
+      tempDiv.style.color = getTempColor(temps[i]);
+    }
+
     timeline24h.appendChild(item);
     shown++;
   }
 }
+
 function getWeatherIcon(code) {
   if (code == null) return "";
   // Clair
