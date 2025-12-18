@@ -3732,15 +3732,21 @@ body.theme-day .compass-arrow {
     max-height: 80vh;
   }
 }
+/* Dernière mise à jour */
 .last-update {
   margin-top: 2px;
   font-size: 0.65rem;
   line-height: 1.2;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.55); /* mode jour */
+  color: rgba(0, 0, 0, 0.55); /* jour */
 }
 
-/* Coordonnées — style premium */
+/* Mode nuit — dernière mise à jour */
+body.theme-night .last-update {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Coordonnées */
 #details-subtitle {
   display: inline-block;
   margin-top: 4px;
@@ -3748,11 +3754,11 @@ body.theme-day .compass-arrow {
   font-size: 0.7rem;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.08);
-  opacity: 0.75;
   letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.75);
 }
 
-/* Mode nuit */
+/* Mode nuit — coordonnées */
 body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.14);
 }
