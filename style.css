@@ -3756,10 +3756,6 @@ body.theme-day .compass-arrow {
 body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.14);
 }
-/* Dernière mise à jour — mode nuit (lisible mais discret) */
-body.theme-night .last-update {
-  color: rgba(255, 255, 255, 0.72);
-}
 /* Dernière mise à jour — correction lisibilité mode nuit */
 body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.9);
