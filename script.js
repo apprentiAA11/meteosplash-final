@@ -1006,7 +1006,7 @@ async function loadCityWeather(ci) {
      btnForecast14?.classList.add("disabled");
 
 
-    renderForecast(j, 7);
+    renderForecast(lastForecastData, 7);
 
   } catch (err) {
     console.error("Erreur météo", err);
