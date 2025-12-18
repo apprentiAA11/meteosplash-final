@@ -2446,11 +2446,11 @@ if (radarSummaryButton) {
 function init() {
   // ⛔ désactiver les boutons AVANT tout chargement
   [btn24h, btnForecast7, btnForecast14].forEach(btn => {
-  if (!btn) return;
-  btn.classList.add("disabled");
-  btn.disabled = true;
-});
-
+    if (!btn) return;
+    btn.classList.add("disabled");
+    btn.disabled = true;
+    btn.style.pointerEvents = "none";
+  });
 
   // 🎨 Thème sauvegardé
   const savedTheme = localStorage.getItem("themeMode");
@@ -2461,9 +2461,9 @@ function init() {
   // 📦 villes sauvegardées
   loadSavedCities();
 
-  // 🌍 charger la météo (la première ville suffit)
+  // 🌍 charger la météo (UNE seule ville)
   if (Array.isArray(cities) && cities.length > 0) {
-    loadCityWeather(cities[0]); // 🔑 UNE seule source
+    loadCityWeather(cities[0]);
   }
 }
 
