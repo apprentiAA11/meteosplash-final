@@ -1284,15 +1284,18 @@ function iconForWeatherCode(code) {
 }
 
 function updateForecastButtonsActiveState(active) {
-    if (active === 7) {
-        btnForecast7.classList.add("pill-button-active");
-        btnForecast14.classList.remove("pill-button-active");
-    } else if (active === 14) {
-        btnForecast14.classList.add("pill-button-active");
-        btnForecast7.classList.remove("pill-button-active");
-    }
-}
+  if (!btnForecast7 || !btnForecast14) return;
 
+  btnForecast7.classList.toggle(
+    "pill-button-active",
+    active === 7
+  );
+
+  btnForecast14.classList.toggle(
+    "pill-button-active",
+    active === 14
+  );
+}
 
 /* --------------------------------------------------------------------------
    14. DÉTAIL JOUR (graphiques température / pluie / vent)
