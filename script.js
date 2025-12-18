@@ -1095,9 +1095,8 @@ if (btn24h) {
   btn24h.addEventListener("click", (e) => {
     if (!lastForecastData || !selectedCity) return;
 
-    // ✅ Clic normal : ouvre le popup "Prochaines 24 h" (graphiques)
-    // 💡 Shift+clic : garde l'ancien comportement (afficher/masquer la timeline 24h sous le titre)
-    if (e && e.shiftKey && timeline24h) {
+    // Shift + clic = timeline inline
+    if (e.shiftKey && timeline24h) {
       timeline24h.classList.toggle("hidden");
       if (!timeline24h.classList.contains("hidden")) {
         renderTimeline24h(lastForecastData);
@@ -1105,11 +1104,8 @@ if (btn24h) {
       return;
     }
 
-btn24h.addEventListener("click", () => {
-  if (!lastForecastData || !selectedCity) return;
-  open24hOverlay();
-});
-
+    // clic normal = overlay 24h
+    open24hOverlay();
   });
 }
 
