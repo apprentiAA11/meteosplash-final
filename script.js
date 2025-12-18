@@ -998,6 +998,10 @@ async function loadCityWeather(ci) {
     ========================= */
     updateForecastButtonsActiveState(7);
     lastForecastData = j;
+     btn24h?.classList.remove("disabled");
+     btnForecast7?.classList.remove("disabled");
+     btnForecast14?.classList.remove("disabled");
+
     renderForecast(j, 7);
 
   } catch (err) {
