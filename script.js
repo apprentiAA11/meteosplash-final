@@ -1010,6 +1010,10 @@ async function loadCityWeather(ci) {
 function renderCurrent(j) {
   if (!detailsCurrent) return;
   const c = j.current;
+  const tempEl = detailsCurrent.querySelector(".detail-value");
+  if (tempEl) {
+   tempEl.style.color = getTempColor(c.temperature_2m);
+  }
 
   const pluieTotal = (c.rain ?? 0) + (c.showers ?? 0);
   const pluieDisplay = pluieTotal > 0 ? pluieTotal.toFixed(1) : (c.precipitation ?? 0);
