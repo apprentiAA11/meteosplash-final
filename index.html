@@ -314,6 +314,29 @@
       <button class="close-btn" id="close-forecast-overlay">✕</button>
     </header>
 
+    <div class="forecast-toggle">
+      <button id="btn-7j" class="active">7 jours</button>
+      <button id="btn-14j">14 jours</button>
+    </div>
+
+    <div id="forecast-content">
+      <!-- ✅ GRAPHES DÉPLACÉS ICI -->
+      <canvas class="day-graph active-day-graph" id="chart-temp"></canvas>
+      <canvas class="day-graph" id="chart-rain"></canvas>
+      <canvas class="day-graph" id="chart-wind"></canvas>
+      <canvas class="day-graph" id="chart-humidity"></canvas>
+    </div>
+  </div>
+</div>
+
+  <div class="overlay-backdrop"></div>
+
+  <div class="overlay-card large">
+    <header class="overlay-header">
+      <h3>Prévisions</h3>
+      <button class="close-btn" id="close-forecast-overlay">✕</button>
+    </header>
+
     <!-- Toggle -->
     <div class="forecast-toggle">
       <button id="btn-7j" class="active">7 jours</button>
@@ -323,6 +346,28 @@
     <!-- Contenu déplacé -->
     <div id="forecast-content">
       <!-- ⬅️ ICI tu déplaces le HTML existant des prévisions -->
+    </div>
+  </div>
+</div>
+<div class="day-overlay" id="forecast-overlay">
+  <div class="overlay-backdrop"></div>
+
+  <div class="overlay-card large">
+    <header class="overlay-header">
+      <h3>Prévisions</h3>
+      <button class="close-btn" id="close-forecast-overlay">✕</button>
+    </header>
+
+    <div class="forecast-toggle">
+      <button id="btn-7j" class="active">7 jours</button>
+      <button id="btn-14j">14 jours</button>
+    </div>
+
+    <div id="forecast-content">
+      <canvas class="day-graph active-day-graph" id="chart-temp"></canvas>
+      <canvas class="day-graph" id="chart-rain"></canvas>
+      <canvas class="day-graph" id="chart-wind"></canvas>
+      <canvas class="day-graph" id="chart-humidity"></canvas>
     </div>
   </div>
 </div>
