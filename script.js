@@ -697,17 +697,11 @@ async function onGeoSuccess(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
 
-  hasValidLocation = true;
-
   btnGeolocate?.classList.remove("location-loading");
   btnGeolocate?.classList.add("location-success");
 
-  // 1️⃣ Charger immédiatement la météo
-  loadWeatherByCoords(lat, lon);
-
-  showToast("📍 Position trouvée", "success");
-
   try {
+    // 🌍 Reverse geocoding D’ABORD
     const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
     const r = await fetch(url);
     const j = await r.json();
@@ -725,20 +719,25 @@ async function onGeoSuccess(position) {
       isCurrentLocation: true,
     };
 
-    // 2️⃣ Ajouter la ville
+    // ➕ Ajouter la ville (comme AVANT)
     addCity(city);
 
-    // 3️⃣ 🔑 FORCER la sélection de la ville
+    // ⭐ Sélectionner la ville (manquait)
     selectedCity = city;
     loadCityWeather(city);
 
-    setGeolocateSuccess(cityName);
+    // 🟢 Mettre à jour le bouton Recherche
+    updateSearchButton(cityName);
+
+    showToast(`📍 ${cityName}`, "success");
+
+    hasValidLocation = true; // 🔒 verrou SEULEMENT à la fin
 
   } catch (err) {
     console.error("Erreur géocodage inverse", err);
+    geolocateByIp();
   }
 }
-
 function onGeoError(err) {
   console.warn("Géolocalisation navigateur refusée:", err);
 
