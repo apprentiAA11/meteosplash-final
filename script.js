@@ -2430,41 +2430,6 @@ if (radarSummaryButton) {
 /* --------------------------------------------------------------------------
    17. INITIALISATION
 -------------------------------------------------------------------------- */
-async function onGeoSuccess(position) {
-  const lat = position.coords.latitude;
-  const lon = position.coords.longitude;
-
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
-    const r = await fetch(url);
-    const j = await r.json();
-    const info = j?.results?.[0];
-
-    const cityName =
-      info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-    const countryName = info?.country || "—";
-
-    addCity({
-      name: cityName,
-      country: countryName,
-      lat,
-      lon,
-      isCurrentLocation: true,
-    });
-
-    hideToast(); // nettoie tout message précédent
-    setGeolocateSuccess(cityName);
-
-  } catch (err) {
-    console.error("Erreur géocodage inverse", err);
-    geolocateByIp(); // fallback IP propre
-  }
-}
-
-function onGeoError(err) {
-  console.warn("Erreur géolocalisation navigateur", err);
-  geolocateByIp(); // fallback IP
-}
 
 function init() {
   // ⛔ désactiver les boutons AVANT tout chargement
