@@ -148,6 +148,10 @@ function renderTimeline24h(j) {
   if (!timeline24h || !j?.hourly) return;
 
   timeline24h.innerHTML = "";
+  const tempDiv = item.querySelector(".hour-temp");
+  if (tempDiv) {
+   tempDiv.style.color = getTempColor(temps[i]);
+  }
 
   const now = new Date();
   const times = j.hourly.time;
@@ -816,6 +820,10 @@ function renderCityList() {
 
   // 🔒 mémoriser la ville sélectionnée AVANT tri
   const currentSelected = selectedCity;
+  const tempSpan = el.querySelector(".city-temp");
+  if (tempSpan && typeof tempVal === "number") {
+   tempSpan.style.color = getTempColor(tempVal);
+  }
 
   cityList.innerHTML = "";
 
