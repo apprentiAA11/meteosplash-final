@@ -977,6 +977,7 @@ async function loadCityWeather(ci) {
 
     /* 📆 Prévisions */
     lastForecastData = j;                // 🔑 D’ABORD
+    enableForecastButtons();
     updateForecastButtonsActiveState(7); // UI
     renderForecast(lastForecastData, 7); // rendu initial
 
