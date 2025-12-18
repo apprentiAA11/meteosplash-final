@@ -3733,10 +3733,13 @@ body.theme-day .compass-arrow {
   }
 }
 .last-update {
-  font-size: 0.72rem;
-  opacity: 0.65;
+  margin-top: 2px;
+  font-size: 0.65rem;
+  line-height: 1.2;
   font-weight: 400;
+  color: rgba(0, 0, 0, 0.55); /* mode jour */
 }
+
 /* Coordonnées — style premium */
 #details-subtitle {
   display: inline-block;
