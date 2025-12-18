@@ -741,30 +741,38 @@ function addCity(ci) {
       Math.abs(x.lon - ci.lon) < 0.01
   );
 
+  // ===== Ville déjà présente =====
   if (existingIndex !== -1) {
     if (ci.isCurrentLocation) {
-      cities.forEach((c) => {
-        c.isCurrentLocation = false;
-      });
+      cities.forEach((c) => (c.isCurrentLocation = false));
       cities[existingIndex].isCurrentLocation = true;
       saveCities();
       renderCityList();
       highlightCity(existingIndex);
     }
+
+    // 🔹 précharge température (liste "Mes villes")
+    fetchCityTemp(cities[existingIndex]);
+
+    // 🔹 charge météo complète (sélection utilisateur)
     loadCityWeather(cities[existingIndex]);
     return;
   }
 
+  // ===== Nouvelle ville =====
   if (ci.isCurrentLocation) {
-    cities.forEach((c) => {
-      c.isCurrentLocation = false;
-    });
+    cities.forEach((c) => (c.isCurrentLocation = false));
   }
 
   cities.push(ci);
   saveCities();
   renderCityList();
-  loadCityWeather(ci);
+
+  // 🔹 IMPORTANT : précharge UNIQUEMENT la température
+  fetchCityTemp(ci);
+
+  // 🔹 NE PAS appeler loadCityWeather ici
+  // la ville ne devient active que si l'utilisateur clique
 
   if (ci.isCurrentLocation) {
     const idx = cities.length - 1;
@@ -800,6 +808,11 @@ function loadSavedCities() {
   if (raw) {
     cities = JSON.parse(raw);
     renderCityList();
+
+    // 🔹 NOUVEAU : précharger la température de chaque ville
+    cities.forEach((ci) => {
+      fetchCityTemp(ci);
+    });
   }
   updateAddCityButtonVisibility();
 }
@@ -1035,10 +1048,10 @@ function renderCurrent(j) {
 
   // Lever / coucher
   if (j.daily?.sunrise?.[0]) {
-    sunriseTime.textContent = j.daily.sunrise[0].substring(11,16);
+    if (sunriseTime) sunriseTime.textContent = j.daily.sunrise[0].substring(11,16);
   }
   if (j.daily?.sunset?.[0]) {
-    sunsetTime.textContent = j.daily.sunset[0].substring(11,16);
+    if (sunsetTime) sunsetTime.textContent = j.daily.sunset[0].substring(11,16);
   }
 }
 
@@ -1557,10 +1570,14 @@ function drawSimpleLineChart(canvas, labels, values, unit) {
   }));
 
   // Couleur de courbe par type
-  let color = "#ff6f61"; // Température
-  if (unit === "mm") color = "#4a90e2";    // Pluie
-  if (unit === "km/h") color = "#34c759";  // Vent
-  if (unit === "%") color = "#af52de";     // Humidité
+  let lineColor = "#ff6f61"; // Température
+  if (unit === "°C") {
+    const mid = values[Math.floor(values.length / 2)];
+    lineColor = getTempColor(mid);
+  }
+  if (unit === "mm") lineColor = "#4a90e2";    // Pluie
+  if (unit === "km/h") lineColor = "#34c759";  // Vent
+  if (unit === "%") lineColor = "#af52de";     // Humidité
 
   // ======= FONCTION DE DESSIN STATIQUE (axes + grille + labels) =======
   function drawStaticFrame() {
@@ -1685,9 +1702,9 @@ function drawSimpleLineChart(canvas, labels, values, unit) {
 
     // Glow léger
     ctx.lineWidth = 2.4;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.shadowColor = color + "66";
+    ctx.strokeStyle = lineColor;
+    ctx.fillStyle = lineColor;
+    ctx.shadowColor = lineColor + "66";
     ctx.shadowBlur = 10;
 
     ctx.beginPath();
@@ -2514,6 +2531,30 @@ async function fetchHistoricalWeather(ci, dateStr) {
     return null;
   }
 }
+async function fetchCityTemp(ci) {
+  try {
+    const url =
+      "https://api.open-meteo.com/v1/forecast" +
+      `?latitude=${ci.lat}&longitude=${ci.lon}` +
+      "&current=temperature_2m,weather_code" +
+      "&timezone=auto";
+
+    const r = await fetch(url);
+    if (!r.ok) return;
+
+    const j = await r.json();
+
+    // on met à jour le cache sans toucher à la ville sélectionnée
+    weatherCache[ci.name] = {
+      ...(weatherCache[ci.name] || {}),
+      current: j.current,
+    };
+
+    renderCityList(); // 🔁 refresh visuel
+  } catch (e) {
+    console.warn("Temp non chargée pour", ci.name);
+  }
+}
 
 function enterHistoryMode() {
   if (!selectedCity || !detailsHistory || !detailsCurrent) {
@@ -2985,7 +3026,6 @@ function startSunArcLoop() {
 }
 
 /* === PATCH Background évolutif — logique jour/nuit === */
-function clamp01(x){return Math.max(0,Math.min(1,x));}
 
 function getDayPhase(now,sunrise,sunset){
   if(now>=sunrise-0.75 && now<sunrise+0.75) return "dawn";
