@@ -1229,9 +1229,8 @@ function formatForecastDate(dateStr) {
 }
 
 function renderForecast(_, days) {
-  if (!forecastList || !lastForecastData?.daily) return;
-
-  const d = lastForecastData.daily;
+  if (!forecastList || !data?.daily) return;
+  const d = data.daily;
   forecastList.innerHTML = "";
 
   const count = Math.min(days, d.time.length);
