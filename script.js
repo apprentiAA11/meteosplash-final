@@ -916,6 +916,11 @@ async function loadCityWeather(ci) {
   detailsTitle.textContent = ci.name;
   detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)}, Lon ${ci.lon.toFixed(2)}`;
 
+  // ⛔ désactiver les boutons tant que les données ne sont pas prêtes
+  btn24h?.classList.add("disabled");
+  btnForecast7?.classList.add("disabled");
+  btnForecast14?.classList.add("disabled");
+
   try {
     const url =
       "https://api.open-meteo.com/v1/forecast" +
@@ -930,30 +935,21 @@ async function loadCityWeather(ci) {
     if (!r.ok) throw new Error("Open-Meteo KO");
     const j = await r.json();
 
-    /* =========================
-       ☀️ LEVER / COUCHER
-    ========================= */
+    /* ☀️ Lever / coucher */
     if (j.daily?.sunrise && j.daily?.sunset) {
       ci.sunrise = j.daily.sunrise[0];
       ci.sunset  = j.daily.sunset[0];
-
       citySunriseHour = getHourFromLocalISO(ci.sunrise);
       citySunsetHour  = getHourFromLocalISO(ci.sunset);
     } else {
-      ci.sunrise = null;
-      ci.sunset  = null;
-      citySunriseHour = null;
-      citySunsetHour  = null;
+      ci.sunrise = ci.sunset = null;
+      citySunriseHour = citySunsetHour = null;
     }
 
-    /* =========================
-       📦 CACHE MÉTÉO
-    ========================= */
+    /* 📦 Cache */
     weatherCache[ci.name] = j;
 
-    /* =========================
-       🌦️ RENDUS PRINCIPAUX
-    ========================= */
+    /* 🌦️ Rendus */
     renderTimeline24h(j);
     renderCurrent(j);
     renderWind(j);
@@ -963,26 +959,17 @@ async function loadCityWeather(ci) {
     renderCityList();
     updateTip(j);
 
-    /* =========================
-       ⏰ HEURE LOCALE + THÈME
-    ========================= */
+    /* ⏰ Heure locale + thème */
     ci.utcOffset = j.utc_offset_seconds;
     updateCityClockFromOffset(j.utc_offset_seconds);
-
-    // 🌗 Thème AUTO / JOUR / NUIT (source unique)
     applyThemeMode();
 
-    /* =========================
-       ☀️ SOLEIL
-    ========================= */
+    /* ☀️ Soleil */
     updateSunArc(ci);
     startSunArcLoop();
 
-    /* =========================
-       🌗 BACKGROUND ÉVOLUTIF
-    ========================= */
+    /* 🌗 Background dynamique */
     applyDynamicBackground(ci, j.current.weather_code);
-
     if (dynamicBgTimer) clearInterval(dynamicBgTimer);
     dynamicBgTimer = setInterval(() => {
       if (selectedCity && weatherCache[selectedCity.name]) {
@@ -993,22 +980,15 @@ async function loadCityWeather(ci) {
       }
     }, 60000);
 
-    /* =========================
-       📆 PRÉVISIONS 7 / 14 JOURS
-    ========================= */
-    updateForecastButtonsActiveState(7);
-    lastForecastData = j;
-     btn24h?.classList.remove("disabled");
-     btnForecast7?.classList.remove("disabled");
-     btnForecast14?.classList.remove("disabled");
-     btn24h?.classList.add("disabled");
-     btnForecast7?.classList.add("disabled");
-     btnForecast14?.classList.add("disabled");
+    /* 📆 Prévisions */
+    lastForecastData = j;                // 🔑 D’ABORD
+    updateForecastButtonsActiveState(7); // UI
+    renderForecast(lastForecastData, 7); // rendu initial
 
-
-    renderForecast(lastForecastData, 7);
-    renderForecast(lastForecastData, 14);
-
+    // ✅ activer les boutons
+    btn24h?.classList.remove("disabled");
+    btnForecast7?.classList.remove("disabled");
+    btnForecast14?.classList.remove("disabled");
 
   } catch (err) {
     console.error("Erreur météo", err);
