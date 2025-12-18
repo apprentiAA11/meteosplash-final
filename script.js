@@ -82,6 +82,20 @@ let currentDaySeries = null;
 /* --------------------------------------------------------------------------
    2. UTILITAIRES
 -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   UI — Dernière mise à jour
+-------------------------------------------------------------------------- */
+function setLastUpdateNow() {
+  const el = document.getElementById("last-update");
+  if (!el) return;
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+
+  el.textContent = `Dernière mise à jour : ${hh}:${mm}`;
+  el.classList.remove("hidden");
+}
 
 function getHourFromLocalISO(iso) {
   if (!iso) return null;
@@ -995,7 +1009,7 @@ async function loadCityWeather(ci) {
     enableForecastButtons();             // ✅ activation UNIQUE
     updateForecastButtonsActiveState(7); // UI
     renderForecast(lastForecastData, 7); // rendu initial
-
+    setLastUpdateNow();
   } catch (err) {
     console.error("Erreur météo", err);
   }
