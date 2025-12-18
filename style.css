@@ -438,6 +438,17 @@ body.theme-night .detail-block {
   position: relative;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
 }
+.compass-circle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: cyan;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
 
 body.theme-night .compass-circle {
   background: radial-gradient(circle at 30% 20%, #2d3b8e, #050921);
@@ -482,7 +493,7 @@ body.theme-night .compass-circle {
   top: 50%;
   left: 50%;
   transform-origin: 50% 80%;
-  transform: translate(-50%, -50%) rotate(0deg);
+  transform: translate(-50%, calc(-50% + 2px)) rotate(0deg);
   box-shadow: 0 0 8px rgba(255, 120, 120, 0.7);
   transition: transform 0.3s ease-out;
 }
@@ -3494,4 +3505,140 @@ body.theme-night .weather-tooltip {
 /* ⚠️ iOS : le backdrop ne doit jamais bloquer le bouton */
 .radar-overlay .overlay-backdrop {
   pointer-events: none;
+}
+/* ===============================
+   🧭 BOUSSOLE – FLÈCHE VENT (FIX)
+================================ */
+
+.wind-compass {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.compass-circle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* Axe central */
+/* ===============================
+   🧭 BOUSSOLE – FLÈCHE CENTRÉE
+================================ */
+
+.compass-arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  /* longueur totale */
+  width: 4px;
+  height: 64px;
+
+  /* centrage réel */
+  transform: translate(-50%, -50%) rotate(0deg);
+  transform-origin: 50% 50%;
+
+  /* couleur & style */
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.15) 0%,
+    #ff4d4d 35%,
+    #ff4d4d 100%
+  );
+
+  border-radius: 3px;
+  z-index: 4;
+}
+
+/* 🔺 Pointe de flèche (devant) */
+.compass-arrow::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid #ff4d4d;
+}
+
+/* ⚫ Contrepoids (arrière) */
+.compass-arrow::before {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+}
+
+
+/* Mode bicolore */
+body.theme-day .compass-arrow {
+  background: linear-gradient(
+    to top,
+    rgba(47,111,255,0.15),
+    #2f6fff 35%,
+    #2f6fff 100%
+  );
+}
+
+body.theme-day .compass-arrow::after {
+  border-bottom-color: #2f6fff;
+}
+
+body.theme-night .compass-arrow {
+  background: linear-gradient(
+    to top,
+    rgba(255,77,77,0.15),
+    #ff4d4d 35%,
+    #ff4d4d 100%
+  );
+}
+
+body.theme-night .compass-arrow::after {
+  border-bottom-color: #ff4d4d;
+}
+/* ===============================
+   🧭 MOYEU CENTRAL — MODE JOUR
+================================ */
+
+body.theme-day .compass-arrow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: 10px;
+  height: 10px;
+
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+
+  /* cœur clair */
+  background: #ffffff;
+
+  /* anneau bleu */
+  box-shadow:
+    0 0 0 2px rgba(47,111,255,0.9),
+    0 0 6px rgba(47,111,255,0.45);
+
+  z-index: 5;
+}
+body.theme-day .compass-arrow {
+  background: linear-gradient(
+    to top,
+    rgba(47,111,255,0.45) 0%,   /* ← début bien visible */
+    #2f6fff 35%,
+    #2f6fff 100%
+  );
 }
