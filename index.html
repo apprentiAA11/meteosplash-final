@@ -15,7 +15,6 @@
 
 <body class="theme-auto weather-clear">
 
-<!-- 🎬 Effets météo -->
 <div class="rain-scene" id="rain-scene">
   <div id="storm-layer"></div>
   <div id="snow-layer"></div>
@@ -46,88 +45,66 @@
   </div>
 </header>
 
-<!-- ================= POPUP RADAR ================= -->
-<div class="radar-overlay hidden" id="radar-overlay">
-  <div class="radar-topbar">
-    <button class="icon-button close-popup" id="btn-close-radar">✕</button>
-  </div>
-  <div class="overlay-backdrop"></div>
-
-  <div class="radar-popup glass-card">
-    <header class="popup-header">
-      <h2>Radar météo</h2>
-    </header>
-
-    <p class="radar-subtitle">
-      Radar pluie, vent et températures (Open-Meteo / OpenWeather)
-    </p>
-
-    <div class="radar-map-wrapper">
-      <div class="radar-map" id="radar-map"></div>
-    </div>
-
-    <div class="radar-tabs">
-      <button class="radar-tab radar-tab-active" id="radar-tab-rain">Pluie</button>
-      <button class="radar-tab" id="radar-tab-wind">Vent</button>
-      <button class="radar-tab" id="radar-tab-temp">Températures</button>
-    </div>
-
-    <div class="radar-grid" id="radar-grid"></div>
-  </div>
-</div>
-
 <!-- ===================== MAIN ===================== -->
 <main class="layout">
 
 <!-- ===== Colonne gauche ===== -->
 <section class="column-left">
+  <section class="card glass-card details-card">
+    <header class="card-header">
+      <div>
+        <h2 id="details-title">Aucune ville sélectionnée</h2>
+        <p class="card-subtitle" id="details-subtitle">Ajoute une ville ou ta position</p>
+      </div>
 
-<section class="card glass-card details-card">
-  <header class="card-header">
-    <div>
-      <h2 id="details-title">Aucune ville sélectionnée</h2>
-      <p class="card-subtitle" id="details-subtitle">Ajoute une ville ou ta position</p>
-    </div>
+      <div class="details-actions">
+        <button class="ghost-button history-button" id="btn-24h">🕒 Prévisions 24h</button>
+        <button class="ghost-button" id="btn-forecast">📅 Prévisions 7/14 jours</button>
+        <button class="ghost-button history-button" id="btn-history">📜 Historique</button>
+      </div>
+    </header>
 
-    <div class="details-actions">
-      <button class="ghost-button history-button" id="btn-24h">🕒 Prévisions 24h</button>
-      <button class="ghost-button" id="btn-forecast">📅 Prévisions 7/14 jours</button>
-      <button class="ghost-button history-button" id="btn-history">📜 Historique</button>
-    </div>
-  </header>
+    <div class="timeline-24h hidden" id="timeline-24h"></div>
+    <div class="details-grid" id="details-current"></div>
+    <div class="detail-block hidden" id="details-history"></div>
 
-  <div class="timeline-24h hidden" id="timeline-24h"></div>
-  <div class="details-grid" id="details-current"></div>
-  <div class="detail-block hidden" id="details-history"></div>
-
-  <!-- Vent -->
-  <div class="wind-block">
-    <div class="wind-compass" id="wind-compass">
-      <div class="compass-circle">
-        <span class="compass-label compass-n">N</span>
-        <span class="compass-label compass-e">E</span>
-        <span class="compass-label compass-s">S</span>
-        <span class="compass-label compass-w">O</span>
-        <div class="compass-arrow"></div>
+    <div class="wind-block">
+      <div class="wind-compass" id="wind-compass">
+        <div class="compass-circle">
+          <span class="compass-label compass-n">N</span>
+          <span class="compass-label compass-e">E</span>
+          <span class="compass-label compass-s">S</span>
+          <span class="compass-label compass-w">O</span>
+          <div class="compass-arrow"></div>
+        </div>
+      </div>
+      <div class="wind-info">
+        <p class="wind-main" id="wind-line-main">Vent : —</p>
+        <p class="wind-sub" id="wind-line-sub">Rafales : —</p>
       </div>
     </div>
-    <div class="wind-info">
-      <p class="wind-main" id="wind-line-main">Vent : —</p>
-      <p class="wind-sub" id="wind-line-sub">Rafales : —</p>
+
+    <div class="sun-times">
+      <div class="sun-item">🌅 <span id="sunrise-time">--:--</span></div>
+      <div class="sun-item">🌇 <span id="sunset-time">--:--</span></div>
     </div>
-  </div>
-
-  <!-- Soleil -->
-  <div class="sun-times">
-    <div class="sun-item">🌅 <span id="sunrise-time">--:--</span></div>
-    <div class="sun-item">🌇 <span id="sunset-time">--:--</span></div>
-  </div>
-
-</section>
+  </section>
 </section>
 
 <!-- ===== Colonne droite ===== -->
 <section class="column-right">
+
+<!-- ✅ PANNEAU AJOUT DE VILLE (OBLIGATOIRE POUR LE JS) -->
+<div class="add-city-panel hidden-merged" id="add-city-panel">
+  <input
+    type="text"
+    id="city-input"
+    class="ios-search-input"
+    placeholder="Ajouter une ville..."
+    autocomplete="off"
+  />
+  <ul class="autocomplete-list inline-autocomplete" id="autocomplete-list"></ul>
+</div>
 
 <section class="card glass-card cities-card">
   <header class="card-header">
@@ -150,34 +127,9 @@
 </section>
 </main>
 
-<!-- ================= OVERLAY AJOUT VILLE ================= -->
-<div class="day-overlay" id="add-city-overlay">
-  <div class="overlay-backdrop"></div>
-  <div class="day-popup glass-card">
-    <header class="popup-header">
-      <h2>Ajouter une ville</h2>
-      <button class="icon-button close-popup" id="btn-close-add-city">✕</button>
-    </header>
-    <div id="add-city-popup-slot"></div>
-  </div>
-</div>
-
-<!-- ================= OVERLAY DÉTAIL JOUR ================= -->
-<div class="day-overlay" id="day-overlay">
-  <div class="overlay-backdrop"></div>
-  <div class="day-popup glass-card">
-    <header class="popup-header">
-      <h2 id="day-overlay-title">Détail du jour</h2>
-      <button class="icon-button close-popup" id="btn-close-day">✕</button>
-    </header>
-    <p class="day-overlay-subtitle" id="day-overlay-subtitle"></p>
-  </div>
-</div>
-
-<!-- ================= OVERLAY PRÉVISIONS 7/14 ================= -->
+<!-- ================= OVERLAY PRÉVISIONS ================= -->
 <div class="day-overlay" id="forecast-overlay">
   <div class="overlay-backdrop"></div>
-
   <div class="overlay-card large">
     <header class="overlay-header">
       <h3>Prévisions</h3>
@@ -207,3 +159,4 @@
 </div>
 </body>
 </html>
+
