@@ -1001,6 +1001,10 @@ async function loadCityWeather(ci) {
      btn24h?.classList.remove("disabled");
      btnForecast7?.classList.remove("disabled");
      btnForecast14?.classList.remove("disabled");
+     btn24h?.classList.add("disabled");
+     btnForecast7?.classList.add("disabled");
+     btnForecast14?.classList.add("disabled");
+
 
     renderForecast(j, 7);
 
