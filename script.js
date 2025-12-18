@@ -693,16 +693,22 @@ function loadWeatherByCoords(lat, lon) {
 
   loadCityWeather(city);
 }
-
 async function onGeoSuccess(position) {
-  if (hasValidLocation) return; // 🔒 sécurité double appel
+  if (hasValidLocation) return; // 🔒 anti double appel
+
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+
+  hasValidLocation = true;
 
   btnGeolocate?.classList.remove("location-loading");
   btnGeolocate?.classList.add("location-success");
 
+  // 1️⃣ Charger immédiatement la météo
   loadWeatherByCoords(lat, lon);
 
   showToast("📍 Position trouvée", "success");
+
   try {
     const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
     const r = await fetch(url);
@@ -713,23 +719,25 @@ async function onGeoSuccess(position) {
       info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
     const countryName = info?.country || "—";
 
-    addCity({
+    const city = {
       name: cityName,
       country: countryName,
       lat,
       lon,
       isCurrentLocation: true,
-    });
+    };
 
-    setGeolocateSuccess(cityName); // 🟢 toast + bouton vert
+    // 2️⃣ Ajouter la ville
+    addCity(city);
+
+    // 3️⃣ 🔑 FORCER la sélection de la ville
+    selectedCity = city;
+    loadCityWeather(city);
+
+    setGeolocateSuccess(cityName);
 
   } catch (err) {
     console.error("Erreur géocodage inverse", err);
-
-    // ⚠️ fallback IP UNIQUEMENT si rien n'a encore validé
-    if (!hasValidLocation) {
-      geolocateByIp();
-    }
   }
 }
 
