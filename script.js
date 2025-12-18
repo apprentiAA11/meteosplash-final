@@ -1235,6 +1235,11 @@ function formatForecastDate(dateStr) {
 
 function renderForecast(_, days) {
   if (!forecastList || !lastForecastData?.daily) return;
+  const maxEl = div.querySelector(".max");
+  const minEl = div.querySelector(".min");
+
+  if (maxEl) maxEl.style.color = getTempColor(d.temperature_2m_max[i]);
+  if (minEl) minEl.style.color = getTempColor(d.temperature_2m_min[i]);
 
   const d = lastForecastData.daily;
   forecastList.innerHTML = "";
