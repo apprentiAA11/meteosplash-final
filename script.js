@@ -980,14 +980,6 @@ async function loadCityWeather(ci) {
     enableForecastButtons();
     updateForecastButtonsActiveState(7); // UI
     renderForecast(lastForecastData, 7); // rendu initial
-
-    [btn24h, btnForecast7, btnForecast14].forEach(btn => {
-  if (!btn) return;
-  btn.classList.remove("disabled");
-  btn.disabled = false;              // ⬅️ CRUCIAL
-  btn.style.pointerEvents = "auto";  // ⬅️ sécurité
-});
-
   } catch (err) {
     console.error("Erreur météo", err);
   }
