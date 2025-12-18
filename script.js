@@ -1016,20 +1016,19 @@ async function loadCityWeather(ci) {
 
 
 function renderCurrent(j) {
-  if (!detailsCurrent) return;
+  if (!detailsCurrent || !j?.current) return;
+
   const c = j.current;
-  const tempEl = detailsCurrent.querySelector(".detail-value");
-  if (tempEl) {
-   tempEl.style.color = getTempColor(c.temperature_2m);
-  }
 
   const pluieTotal = (c.rain ?? 0) + (c.showers ?? 0);
-  const pluieDisplay = pluieTotal > 0 ? pluieTotal.toFixed(1) : (c.precipitation ?? 0);
+  const pluieDisplay = pluieTotal > 0
+    ? pluieTotal.toFixed(1)
+    : (c.precipitation ?? 0);
 
   detailsCurrent.innerHTML = `
     <div class="detail-block">
       <div class="detail-label">Température</div>
-      <div class="detail-value">${c.temperature_2m}°C</div>
+      <div class="detail-value temp-main">${c.temperature_2m}°C</div>
       <div class="detail-sub">Ressenti : ${c.temperature_2m}°C</div>
     </div>
 
@@ -1048,34 +1047,23 @@ function renderCurrent(j) {
     <div class="detail-block">
       <div class="detail-label">Neige</div>
       <div class="detail-value">${c.snowfall} mm</div>
-      <div class="detail-sub">Averse : ${c.showers} mm</div>
+      <div class="detail-sub">Averses : ${c.showers} mm</div>
     </div>
   `;
 
-  const sr = j.daily.sunrise ? j.daily.sunrise[0].substring(11,16) : "";
-  const ss = j.daily.sunset ? j.daily.sunset[0].substring(11,16) : "";
-  const el_sr = document.getElementById("sunrise-time");
-  const el_ss = document.getElementById("sunset-time");
-  if (el_sr) el_sr.textContent = sr;
-  if (el_ss) el_ss.textContent = ss;
+  const tempEl = detailsCurrent.querySelector(".temp-main");
+  if (tempEl) {
+    tempEl.style.color = getTempColor(c.temperature_2m);
+  }
 
-  // v6.7 (H) — micro animation des valeurs
-  try {
-    const values = detailsCurrent.querySelectorAll(".detail-value");
-    values.forEach((v) => {
-      v.classList.remove("value-animate");
-      // relance propre de l'animation
-      void v.offsetWidth;
-      v.classList.add("value-animate");
-      v.addEventListener(
-        "animationend",
-        () => v.classList.remove("value-animate"),
-        { once: true }
-      );
-    });
-  } catch (e) {}
+  // Lever / coucher
+  if (j.daily?.sunrise?.[0]) {
+    sunriseTime.textContent = j.daily.sunrise[0].substring(11,16);
+  }
+  if (j.daily?.sunset?.[0]) {
+    sunsetTime.textContent = j.daily.sunset[0].substring(11,16);
+  }
 }
-
 
 /* --------------------------------------------------------------------------
    11. Boussole du vent
