@@ -684,11 +684,12 @@ if (btnGeolocate) {
 async function onGeoSuccess(position) {
   if (hasValidLocation) return; // 🔒 sécurité double appel
 
-  hasValidLocation = true; // 🔒 VERROU IMMÉDIAT (clé du bug)
+  btnGeolocate?.classList.remove("location-loading");
+  btnGeolocate?.classList.add("location-success");
 
-  const lat = position.coords.latitude;
-  const lon = position.coords.longitude;
+  loadWeatherByCoords(lat, lon);
 
+  showToast("📍 Position trouvée", "success");
   try {
     const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
     const r = await fetch(url);
