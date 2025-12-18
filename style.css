@@ -3737,4 +3737,20 @@ body.theme-day .compass-arrow {
   opacity: 0.65;
   font-weight: 400;
 }
+/* Coordonnées — style premium */
+#details-subtitle {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0.75;
+  letter-spacing: 0.3px;
+}
 
+/* Mode nuit */
+body.theme-night #details-subtitle {
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0.65;
+}
