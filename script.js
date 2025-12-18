@@ -682,12 +682,11 @@ if (btnGeolocate) {
    6-bis. CALLBACKS GÉOLOCALISATION NAVIGATEUR
 -------------------------------------------------------------------------- */
 async function onGeoSuccess(position) {
-  if (hasValidLocation) return; // 🔒 sécurité double appel
-
-  hasValidLocation = true; // 🔒 VERROU IMMÉDIAT (clé du bug)
+  btnGeolocate.classList.remove("location-loading");
 
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
+  hasValidLocation = true;
 
   try {
     const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
@@ -699,20 +698,31 @@ async function onGeoSuccess(position) {
       info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
     const countryName = info?.country || "—";
 
-    addCity({
+    // 🔴 IMPORTANT : supprimer toute ancienne "Ma position"
+    cities = cities.filter(c => !c.isCurrentLocation);
+
+    const city = {
       name: cityName,
       country: countryName,
       lat,
       lon,
       isCurrentLocation: true,
-    });
+    };
 
-    setGeolocateSuccess(cityName); // 🟢 toast + bouton vert
+    addCity(city);
+
+    // 🔴 ville ACTIVE
+    selectedCity = city;
+
+    // 🔴 recharge UI complète
+    loadCityWeather(city);
+
+    setGeolocateSuccess(cityName);
 
   } catch (err) {
     console.error("Erreur géocodage inverse", err);
 
-    // ⚠️ fallback IP UNIQUEMENT si rien n'a encore validé
+    // fallback IP uniquement si VRAIMENT rien n'a été validé
     if (!hasValidLocation) {
       geolocateByIp();
     }
