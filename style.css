@@ -3760,3 +3760,10 @@ body.theme-night #details-subtitle {
 body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.72);
 }
+/* Dernière mise à jour — correction lisibilité mode nuit */
+body.theme-night .last-update {
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 1; /* on force, même si le parent est atténué */
+  -webkit-font-smoothing: antialiased;
+}
+
