@@ -3707,7 +3707,7 @@ body.theme-day .compass-arrow {
   opacity: 1;
 }
 /* =====================================================
-   POPUP PRÉVISIONS : position adaptive
+   POPUP PRÉVISIONS — position adaptive
 ===================================================== */
 
 #forecast-overlay {
@@ -3732,21 +3732,26 @@ body.theme-day .compass-arrow {
     max-height: 80vh;
   }
 }
-/* Dernière mise à jour */
+
+/* =====================================================
+   HEADER DÉTAILS — TYPO & LISIBILITÉ
+===================================================== */
+
+/* Dernière mise à jour — mode jour */
 .last-update {
   margin-top: 2px;
   font-size: 0.65rem;
   line-height: 1.2;
   font-weight: 400;
-  color: rgba(0, 0, 0, 0.55); /* jour */
+  color: rgba(0, 0, 0, 0.55);
 }
 
-/* Mode nuit — dernière mise à jour */
+/* Dernière mise à jour — mode nuit */
 body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* Coordonnées */
+/* Coordonnées (Lat / Lon) — style premium */
 #details-subtitle {
   display: inline-block;
   margin-top: 4px;
@@ -3758,7 +3763,7 @@ body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.75);
 }
 
-/* Mode nuit — coordonnées */
+/* Coordonnées — mode nuit */
 body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.14);
 }
