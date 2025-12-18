@@ -1296,6 +1296,14 @@ function updateForecastButtonsActiveState(active) {
     active === 14
   );
 }
+function enableForecastButtons() {
+  [btn24h, btnForecast7, btnForecast14].forEach(btn => {
+    if (!btn) return;
+    btn.classList.remove("disabled");
+    btn.disabled = false;
+    btn.style.pointerEvents = "auto";
+  });
+}
 
 /* --------------------------------------------------------------------------
    14. DÉTAIL JOUR (graphiques température / pluie / vent)
