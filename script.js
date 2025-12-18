@@ -2468,9 +2468,12 @@ function onGeoError(err) {
 
 function init() {
   // ⛔ désactiver les boutons AVANT tout chargement
-  btn24h?.classList.add("disabled");
-  btnForecast7?.classList.add("disabled");
-  btnForecast14?.classList.add("disabled");
+  [btn24h, btnForecast7, btnForecast14].forEach(btn => {
+  if (!btn) return;
+  btn.classList.add("disabled");
+  btn.disabled = true;
+});
+
 
   // 🎨 Thème sauvegardé
   const savedTheme = localStorage.getItem("themeMode");
