@@ -738,6 +738,16 @@ async function onGeoSuccess(position) {
     geolocateByIp();
   }
 }
+function updateSearchButton(label) {
+  const btn = document.getElementById("btn-search");
+  if (!btn) return;
+
+  const spanLabel = btn.querySelector(".label");
+  if (!spanLabel) return;
+
+  spanLabel.textContent = label;
+}
+
 function onGeoError(err) {
   console.warn("Géolocalisation navigateur refusée:", err);
 
