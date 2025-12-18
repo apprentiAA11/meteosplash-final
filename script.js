@@ -94,11 +94,24 @@ function getHourFromLocalISO(iso) {
   return hh + mm / 60;
 }
 
-
 function degreeToCardinal(angle) {
   const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
   const index = Math.round((angle % 360) / 45) % 8;
   return directions[index];
+}
+function getTempColor(t) {
+  if (t == null || isNaN(t)) return "#9ca3af"; // gris neutre
+
+  if (t < -10) return "#0b3c5d";        // bleu foncé
+  if (t < 0)   return "#1e6091";        // bleu moyen
+  if (t < 5)   return "#4ea8de";        // bleu clair
+  if (t < 10)  return "#90dbf4";        // bleu très clair
+  if (t < 15)  return "#b7e4c7";        // vert clair
+  if (t < 20)  return "#74c69d";        // vert moyen
+  if (t < 25)  return "#2d6a4f";        // vert foncé
+  if (t < 30)  return "#f4a261";        // orange
+  if (t < 35)  return "#e63946";        // rouge
+  return "#d00000";                     // rouge vif
 }
 
 function formatDateISO(date) {
