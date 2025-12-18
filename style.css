@@ -3732,3 +3732,9 @@ body.theme-day .compass-arrow {
     max-height: 80vh;
   }
 }
+.last-update {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  font-weight: 400;
+}
+
