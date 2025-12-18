@@ -792,14 +792,16 @@ body.theme-night .city-item {
   text-decoration: underline;
 }
 
-/* ====================================================================== */
-/* POPUP RECHERCHE                                                        */
-/* ====================================================================== */
+/* ======================================================================
+   OVERLAYS — GESTION SAFE (ANTI-BLOCAGE TOTAL)
+====================================================================== */
 
 .hidden {
   display: none;
 }
 
+/* Tous les overlays sont totalement inactifs par défaut */
+.day-overlay,
 .search-overlay,
 .radar-overlay {
   position: fixed;
@@ -808,21 +810,41 @@ body.theme-night .city-item {
   align-items: center;
   justify-content: center;
   z-index: 30;
+  pointer-events: none;
 }
 
+/* Overlay actif = visible + cliquable */
+.day-overlay.active,
 .search-overlay.active,
 .radar-overlay.active {
   display: flex;
+  pointer-events: auto;
 }
 
+/* Backdrop : actif uniquement quand overlay actif */
+.day-overlay .overlay-backdrop,
+.search-overlay .overlay-backdrop,
+.radar-overlay .overlay-backdrop {
+  pointer-events: none;
+}
+
+.day-overlay.active .overlay-backdrop,
+.search-overlay.active .overlay-backdrop,
+.radar-overlay.active .overlay-backdrop {
+  pointer-events: auto;
+}
+
+/* Fond sombre */
 .overlay-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(5, 5, 20, 0.55);
 }
 
+/* Popups */
 .search-popup,
-.radar-popup {
+.radar-popup,
+.day-popup {
   position: relative;
   width: 100%;
   max-width: 420px;
@@ -831,6 +853,7 @@ body.theme-night .city-item {
   border-radius: var(--radius-lg);
 }
 
+/* Header popup */
 .popup-header {
   display: flex;
   justify-content: space-between;
@@ -848,8 +871,7 @@ body.theme-night .city-item {
   padding-inline: 10px;
 }
 
-/* champ dans la popup */
-
+/* Champ dans la popup */
 .popup-input {
   width: 100%;
   border-radius: var(--radius-pill);
@@ -866,8 +888,7 @@ body.theme-night .popup-input {
   border-color: rgba(130, 146, 255, 0.7);
 }
 
-/* liste autocomplete WAOUH */
-
+/* Autocomplete */
 .autocomplete-list {
   margin: 0;
   margin-top: 6px;
@@ -907,7 +928,6 @@ body.theme-night .autocomplete-list {
   font-size: 0.78rem;
   color: var(--text-muted);
 }
-
 
 /* ====================================================================== */
 /* RADAR POPUP                                                            */
@@ -3654,4 +3674,61 @@ body.theme-day .compass-arrow {
     #2f6fff 35%,
     #2f6fff 100%
   );
+}
+
+
+/* =====================================================
+   iOS SLIDE MODAL — Prévisions popup
+===================================================== */
+
+#forecast-overlay {
+  align-items: flex-end;
+}
+
+#forecast-overlay .day-popup {
+  transform: translateY(100%);
+  opacity: 0;
+  transition:
+    transform 0.35s cubic-bezier(.2,.8,.2,1),
+    opacity 0.25s ease;
+}
+
+#forecast-overlay.active .day-popup {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+#forecast-overlay .overlay-backdrop {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#forecast-overlay.active .overlay-backdrop {
+  opacity: 1;
+}
+/* =====================================================
+   POPUP PRÉVISIONS : position adaptive
+===================================================== */
+
+#forecast-overlay {
+  display: flex;
+  justify-content: center;
+}
+
+/* Mobile : ancrée en bas (iOS style) */
+@media (max-width: 768px) {
+  #forecast-overlay {
+    align-items: flex-end;
+  }
+}
+
+/* Desktop : centrée */
+@media (min-width: 769px) {
+  #forecast-overlay {
+    align-items: center;
+  }
+
+  #forecast-overlay .day-popup {
+    max-height: 80vh;
+  }
 }
