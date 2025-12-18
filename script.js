@@ -1128,7 +1128,11 @@ if (btn24h) {
       return;
     }
 
-    open24hOverlay();
+btn24h.addEventListener("click", () => {
+  if (!lastForecastData || !selectedCity) return;
+  open24hOverlay();
+});
+
   });
 }
 
