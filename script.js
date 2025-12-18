@@ -694,8 +694,6 @@ function loadWeatherByCoords(lat, lon) {
   loadCityWeather(city);
 }
 async function onGeoSuccess(position) {
-  if (hasValidLocation) return; // 🔒 anti double appel
-
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
 
