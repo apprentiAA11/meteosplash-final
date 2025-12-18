@@ -682,66 +682,34 @@ if (btnGeolocate) {
    6-bis. CALLBACKS GÉOLOCALISATION NAVIGATEUR
 -------------------------------------------------------------------------- */
 async function onGeoSuccess(position) {
-  console.log("✅ onGeoSuccess CALLED", position);
-
   btnGeolocate.classList.remove("location-loading");
 
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
   hasValidLocation = true;
 
-  console.log("📍 coords", lat, lon);
+  // 🔴 PAS de reverse geocoding côté client (CORS)
+  const cityName = "Ma position";
+  const countryName = "";
 
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=fr`;
-    console.log("🌍 reverse url", url);
+  // Supprimer ancienne position
+  cities = cities.filter(c => !c.isCurrentLocation);
 
-    const r = await fetch(url);
-    console.log("🌍 reverse response", r.status);
+  const city = {
+    name: cityName,
+    country: countryName,
+    lat,
+    lon,
+    isCurrentLocation: true,
+  };
 
-    const j = await r.json();
-    console.log("🌍 reverse json", j);
+  addCity(city);
+  selectedCity = city;
+  loadCityWeather(city);
 
-    const info = j?.results?.[0];
-    console.log("🏙️ city info", info);
-
-    const cityName =
-      info?.name || `Position (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
-    const countryName = info?.country || "—";
-
-    console.log("🏁 cityName", cityName);
-
-    console.log("📦 cities BEFORE", cities);
-
-    cities = cities.filter(c => !c.isCurrentLocation);
-
-    const city = {
-      name: cityName,
-      country: countryName,
-      lat,
-      lon,
-      isCurrentLocation: true,
-    };
-
-    console.log("📦 city object", city);
-
-    addCity(city);
-    console.log("📦 cities AFTER addCity", cities);
-
-    selectedCity = city;
-    console.log("⭐ selectedCity SET", selectedCity);
-
-    loadCityWeather(city);
-    console.log("🌦️ loadCityWeather CALLED");
-
-    setGeolocateSuccess(cityName);
-    console.log("🟢 setGeolocateSuccess CALLED");
-
-  } catch (err) {
-    console.error("❌ ERREUR GEO", err);
-  }
+  setGeolocateSuccess(cityName);
+  showToast("📍 Position trouvée", "success");
 }
-
 
 function onGeoError(err) {
   console.warn("Géolocalisation navigateur refusée:", err);
