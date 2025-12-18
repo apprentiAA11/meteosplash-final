@@ -688,11 +688,21 @@ async function onGeoSuccess(position) {
   const lon = position.coords.longitude;
   hasValidLocation = true;
 
-  // 🔴 PAS de reverse geocoding côté client (CORS)
-  const cityName = "Ma position";
-  const countryName = "";
+  let cityName = "Ma position";
+  let countryName = "";
 
-  // Supprimer ancienne position
+  // 🌍 récupération du nom de ville (CORS OK)
+  try {
+    const r = await fetch("https://ipapi.co/json/");
+    const j = await r.json();
+
+    if (j?.city) cityName = j.city;
+    if (j?.country_name) countryName = j.country_name;
+  } catch (e) {
+    console.warn("IP geolocation failed");
+  }
+
+  // 🔁 supprimer ancienne position
   cities = cities.filter(c => !c.isCurrentLocation);
 
   const city = {
@@ -708,7 +718,7 @@ async function onGeoSuccess(position) {
   loadCityWeather(city);
 
   setGeolocateSuccess(cityName);
-  showToast("📍 Position trouvée", "success");
+  showToast(`📍 ${cityName}`, "success");
 }
 
 function onGeoError(err) {
