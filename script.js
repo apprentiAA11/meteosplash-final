@@ -1077,24 +1077,19 @@ function renderWind(j) {
 
 if (btnForecast7) {
   btnForecast7.addEventListener("click", () => {
+    if (!lastForecastData) return;
     updateForecastButtonsActiveState(7);
-    if (selectedCity) {
-        renderForecast(weatherCache[selectedCity.name], 7);
-        activateForecastClicks();
-    }
-});
+    renderForecast(lastForecastData, 7);
+  });
 }
 
 if (btnForecast14) {
   btnForecast14.addEventListener("click", () => {
+    if (!lastForecastData) return;
     updateForecastButtonsActiveState(14);
-    if (selectedCity) {
-        renderForecast(weatherCache[selectedCity.name], 14);
-        activateForecastClicks();
-    }
-});
+    renderForecast(lastForecastData, 14);
+  });
 }
-
 
 if (btn24h) {
   btn24h.addEventListener("click", (e) => {
