@@ -47,8 +47,6 @@ const detailsCurrent = document.getElementById("details-current");
 const detailsHistory = document.getElementById("details-history");
 const btnHistory = document.getElementById("btn-history");
 
-const windCompass = document.getElementById("wind-compass");
-const windArrow = windCompass ? windCompass.querySelector(".compass-arrow") : null;
 const windLineMain = document.getElementById("wind-line-main");
 const windLineSub = document.getElementById("wind-line-sub");
 
@@ -72,6 +70,8 @@ const dayGraphTemp = document.getElementById("chart-temp");
 const dayGraphRain = document.getElementById("chart-rain");
 const dayGraphWind = document.getElementById("chart-wind");
 const dayGraphHumidity = document.getElementById("chart-humidity");
+const sunriseTime = document.getElementById("sunrise-time");
+const sunsetTime  = document.getElementById("sunset-time");
 
 let selectedCity = null;
 let weatherCache = {};
@@ -1047,13 +1047,19 @@ function renderCurrent(j) {
 -------------------------------------------------------------------------- */
 
 function renderWind(j) {
-  if (!windArrow) return;
-  const c = j.current;
-  const dir = c.wind_direction_10m;
-  const speed = c.wind_speed_10m;
-  const gust = c.wind_gusts_10m;
+  const windCompass = document.getElementById("wind-compass");
+  if (!windCompass || !j?.current) return;
 
-  windArrow.style.transform = `translate(-50%, -50%) rotate(${dir}deg)`;
+  const windArrow = windCompass.querySelector(".compass-arrow");
+  if (!windArrow) return;
+
+  const c = j.current;
+  const dir = c.wind_direction_10m ?? 0;
+  const speed = c.wind_speed_10m ?? 0;
+  const gust = c.wind_gusts_10m ?? 0;
+
+  windArrow.style.transform =
+    `translate(-50%, -50%) rotate(${(dir + 180) % 360}deg)`;
 
   if (windLineMain) {
     windLineMain.textContent = `Vent : ${degreeToCardinal(dir)} (${speed} km/h)`;
@@ -1062,6 +1068,7 @@ function renderWind(j) {
     windLineSub.textContent = `Rafales : ${gust} km/h`;
   }
 }
+
 
 /* --------------------------------------------------------------------------
    13. PRÉVISIONS 7 & 14 jours
@@ -1439,7 +1446,6 @@ if (forecastList) {
 
 
 function drawSimpleLineChart(canvas, labels, values, unit) {
-   let color = "#ff6f61";
    if (unit === "°C") {
    color = getTempColor(
     values[Math.floor(values.length / 2)] // temp médiane
@@ -2977,11 +2983,7 @@ function startSunArcLoop() {
     }
   }, 60 * 1000);
 }
-if (btn24h && timeline24h) {
-  btn24h.addEventListener("click", () => {
-    timeline24h.classList.toggle("hidden");
-  });
-}
+
 /* === PATCH Background évolutif — logique jour/nuit === */
 function clamp01(x){return Math.max(0,Math.min(1,x));}
 
