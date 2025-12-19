@@ -849,7 +849,6 @@ if (btnReset) {
 function renderCityList() {
   if (!cityList) return;
 
-  const currentSelected = selectedCity;
   cityList.innerHTML = "";
 
   if (sortSelect?.value === "alpha") {
@@ -861,8 +860,6 @@ function renderCityList() {
       return Tb - Ta;
     });
   }
-
-  selectedCity = currentSelected;
 
   cities.forEach((ci, idx) => {
     const el = document.createElement("div");
@@ -896,6 +893,18 @@ function renderCityList() {
         e.stopPropagation();
         return;
       }
+
+      // 🔵 Définir immédiatement la ville active
+      selectedCity = ci;
+
+      // 🔵 Feedback instantané dans le cadre gauche
+      detailsTitle.textContent = ci.name;
+      detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)} · Lon ${ci.lon.toFixed(2)}`;
+
+      // 🔵 Highlight immédiat
+      renderCityList();
+
+      // 🔵 Chargement météo (asynchrone)
       loadCityWeather(ci);
     });
 
@@ -904,7 +913,6 @@ function renderCityList() {
 
   updateAddCityButtonVisibility();
 }
-
 
 function highlightCity(index) {
   if (!cityList) return;
@@ -939,11 +947,30 @@ function updateCityClockFromOffset(offsetSeconds) {
 
 /* 🌍 Chargement météo — VERSION PRO STABLE */
 async function loadCityWeather(ci) {
-  // 🔒 définir la ville sélectionnée (source unique)
-  selectedCity = cities.find(c => isSameCity(c, ci)) || ci;
+
+  /* =====================================================
+     🔵 UX INSTANT — mise à jour immédiate
+  ===================================================== */
 
   detailsTitle.textContent = ci.name;
-  detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)}, Lon ${ci.lon.toFixed(2)}`;
+  detailsSubtitle.textContent = `Lat ${ci.lat.toFixed(2)} · Lon ${ci.lon.toFixed(2)}`;
+
+  // Highlight ville sélectionnée
+  document.querySelectorAll(".city-item").forEach(el =>
+    el.classList.remove("city-item-active")
+  );
+
+  const activeItem = document.querySelector(
+    `.city-item[data-lat="${ci.lat}"][data-lon="${ci.lon}"]`
+  );
+  if (activeItem) activeItem.classList.add("city-item-active");
+
+  /* =====================================================
+     🔒 Source unique de vérité
+  ===================================================== */
+
+  selectedCity = cities.find(c => isSameCity(c, ci)) || ci;
+
 
   try {
     const url =
