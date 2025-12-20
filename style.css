@@ -3750,10 +3750,9 @@ body.theme-day .compass-arrow {
 body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.85);
 }
-
 /* =====================================================
    🎨 UI PREMIUM — HORLOGE + COORDONNÉES
-   (à placer en FIN de style.css)
+   (BLOC FINAL — À PLACER EN FIN DE style.css)
 ===================================================== */
 
 /* 📍 Coordonnées (Lat / Lon) */
@@ -3811,11 +3810,6 @@ body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.45);
   color: #3b3b5a;
 }
-/* 🌙 Date — style nuit */
-body.theme-night .radar-date {
-  background: rgba(120, 140, 255, 0.18);
-  color: rgba(220, 230, 255, 0.85);
-}
 
 /* Jour — heure */
 body.theme-day .radar-clock {
@@ -3841,18 +3835,6 @@ body.theme-night .radar-clock {
   box-shadow:
     0 2px 10px rgba(120, 140, 255, 0.35),
     inset 0 1px 0 rgba(120, 140, 255, 0.25);
-}
-/* ⏰ HORLOGE — STYLE PREMIUM MODE JOUR */
-body.theme-day .radar-clock {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 240, 190, 0.95),
-    rgba(255, 220, 130, 0.9)
-  );
-  color: #2b2100;
-  box-shadow:
-    0 2px 6px rgba(255, 200, 80, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* Nuit — date */
