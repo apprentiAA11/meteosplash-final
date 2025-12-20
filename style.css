@@ -3767,3 +3767,73 @@ body.theme-night .last-update {
 body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.14);
 }
+/* Lat / Lon — mode jour : lisibilité maximale */
+body.theme-day #details-subtitle {
+  color: #000000;
+  opacity: 0.85;
+}
+/* 📍 Lat / Lon — pill jaune doux (mode jour) */
+body.theme-day #details-subtitle {
+  color: #2b2100; /* brun très foncé → meilleure lisibilité */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 238, 180, 0.95),
+    rgba(255, 223, 128, 0.9)
+  );
+  padding: 4px 12px;
+  border-radius: 999px;
+  display: inline-block;
+  font-weight: 500;
+  opacity: 1;
+  box-shadow: 0 2px 6px rgba(255, 200, 60, 0.35);
+}
+/* ⏰ Heure + date (header) */
+.header-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+/* Heure */
+.radar-clock {
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  animation: clockPulse 1s infinite;
+}
+
+/* Date */
+.radar-date {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Animation subtile (Apple-like) */
+@keyframes clockPulse {
+  0%   { opacity: 0.85; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+
+/* Mode jour */
+body.theme-day .radar-clock,
+body.theme-day .radar-date {
+  color: #1f2937;
+}
+
+/* Mode nuit */
+body.theme-night .radar-clock,
+body.theme-night .radar-date {
+  color: rgba(220, 230, 255, 0.85);
+}
+/* ⏰ Heure + date dans le header */
+.header-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.radar-date {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
