@@ -3811,6 +3811,11 @@ body.theme-night #details-subtitle {
   background: rgba(255, 255, 255, 0.45);
   color: #3b3b5a;
 }
+/* 🌙 Date — style nuit */
+body.theme-night .radar-date {
+  background: rgba(120, 140, 255, 0.18);
+  color: rgba(220, 230, 255, 0.85);
+}
 
 /* Jour — heure */
 body.theme-day .radar-clock {
