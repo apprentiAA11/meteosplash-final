@@ -3751,45 +3751,42 @@ body.theme-night .last-update {
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* Coordonnées (Lat / Lon) — style premium */
+/* =====================================================
+   🎨 UI PREMIUM — HORLOGE + COORDONNÉES
+   (à placer en FIN de style.css)
+===================================================== */
+
+/* 📍 Coordonnées (Lat / Lon) */
 #details-subtitle {
   display: inline-block;
   margin-top: 4px;
-  padding: 2px 8px;
+  padding: 4px 12px;
   font-size: 0.7rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
   letter-spacing: 0.3px;
-  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
 }
 
-/* Coordonnées — mode nuit */
-body.theme-night #details-subtitle {
-  background: rgba(255, 255, 255, 0.14);
-}
-/* Lat / Lon — mode jour : lisibilité maximale */
+/* Jour — pill jaune doux */
 body.theme-day #details-subtitle {
-  color: #000000;
-  opacity: 0.85;
-}
-/* 📍 Lat / Lon — pill jaune doux (mode jour) */
-body.theme-day #details-subtitle {
-  color: #2b2100; /* brun très foncé → meilleure lisibilité */
+  color: #2b2100;
   background: linear-gradient(
     180deg,
     rgba(255, 238, 180, 0.95),
     rgba(255, 223, 128, 0.9)
   );
-  padding: 4px 12px;
-  border-radius: 999px;
-  display: inline-block;
-  font-weight: 500;
-  opacity: 1;
   box-shadow: 0 2px 6px rgba(255, 200, 60, 0.35);
 }
+
+/* Nuit — bleu discret */
+body.theme-night #details-subtitle {
+  color: rgba(220, 230, 255, 0.85);
+  background: rgba(120, 140, 255, 0.18);
+}
+
 /* ⏰ Heure + date (header) */
 .header-time {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-weight: 600;
@@ -3799,22 +3796,20 @@ body.theme-day #details-subtitle {
 .radar-clock {
   font-size: 0.95rem;
   letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
   animation: clockPulse 1s infinite;
 }
 
 /* Date */
 .radar-date {
-  font-size: 0.75rem;
-  opacity: 0.7;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  opacity: 0.85;
 }
 
-/* Animation subtile (Apple-like) */
-@keyframes clockPulse {
-  0%   { opacity: 0.85; }
-  50%  { opacity: 1; }
-  100% { opacity: 0.85; }
-}
-/* Mode jour */
+/* Jour — heure */
 body.theme-day .radar-clock {
   background: linear-gradient(
     180deg,
@@ -3827,20 +3822,28 @@ body.theme-day .radar-clock {
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+/* Nuit — heure */
+body.theme-night .radar-clock {
+  background: linear-gradient(
+    180deg,
+    rgba(24, 28, 80, 0.95),
+    rgba(10, 12, 40, 0.95)
+  );
+  color: #eef0ff;
+  box-shadow:
+    0 2px 10px rgba(120, 140, 255, 0.35),
+    inset 0 1px 0 rgba(120, 140, 255, 0.25);
+}
 
-/* Mode nuit */
-body.theme-night .radar-clock,
+/* Nuit — date */
 body.theme-night .radar-date {
+  background: rgba(120, 140, 255, 0.18);
   color: rgba(220, 230, 255, 0.85);
 }
-/* ⏰ Heure + date dans le header */
-.header-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.radar-date {
-  font-size: 0.7rem;
-  opacity: 0.7;
-}
 
+/* Animation subtile */
+@keyframes clockPulse {
+  0%   { opacity: 0.85; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.85; }
+}
