@@ -85,6 +85,35 @@ let currentDaySeries = null;
 /* --------------------------------------------------------------------------
    UI — Dernière mise à jour
 -------------------------------------------------------------------------- */
+async function selectCity(ci, { addIfMissing = false } = {}) {
+  if (!ci) return;
+
+  // 🔎 retrouver si déjà connue
+  let city = cities.find(c => isSameCity(c, ci));
+
+  // ➕ ajout UNIQUEMENT si demandé (recherche / géoloc)
+  if (!city && addIfMissing) {
+    city = { ...ci };
+    cities.push(city);
+    saveCities();
+  } else if (!city) {
+    city = ci;
+  }
+
+  selectedCity = city;
+
+  // UI immédiate
+  detailsTitle.textContent = city.name;
+  detailsSubtitle.textContent =
+    `Lat ${city.lat.toFixed(2)} · Lon ${city.lon.toFixed(2)}`;
+
+  // Highlight
+  renderCityList();
+
+  // Chargement météo
+  await loadCityWeather(city);
+}
+
 function setLastUpdateNow() {
   const el = document.getElementById("last-update");
   if (!el) return;
@@ -139,15 +168,25 @@ function updateRadarClockFromISO(iso, utcOffsetSeconds) {
   const el = document.getElementById("radar-clock");
   if (!el || !iso || typeof utcOffsetSeconds !== "number") return;
 
-  // convertir l'heure ISO en heure locale ville
   const utcMs = Date.parse(iso + "Z");
   const local = new Date(utcMs + utcOffsetSeconds * 1000);
 
   const h = String(local.getHours()).padStart(2, "0");
   const m = String(local.getMinutes()).padStart(2, "0");
+  const s = String(local.getSeconds()).padStart(2, "0");
 
-  el.textContent = `${h}:${m}`;
+  el.textContent = `${h}:${m}:${s}`;
+  const dateEl = document.getElementById("radar-date");
+   if (dateEl) {
+    dateEl.textContent = local.toLocaleDateString("fr-FR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+
 }
+
 
 function formatDay(iso) {
   const d = new Date(iso);
@@ -248,7 +287,7 @@ function isSameCity(a, b) {
 
 function selectCityByIndex(idx) {
   if (idx >= 0 && idx < cities.length) {
-    loadCityWeather(cities[idx]);
+    selectCity(cities[idx]);
   }
 }
 
@@ -562,16 +601,21 @@ if (cityInput) {
         autocompleteItems.push(li);
 
         li.addEventListener("click", () => {
-          addCity({
-            name: item.name,
-            country: item.country,
-            lat: item.latitude,
-            lon: item.longitude,
-          });
-          autocompleteList.innerHTML = "";
-          autocompleteSelectedIndex = -1;
-          cityInput.value = "";
-        });
+          selectCity(
+           {
+             name: item.name,
+             country: item.country,
+             lat: item.latitude,
+             lon: item.longitude,
+           },
+    { addIfMissing: true }
+    );
+
+         autocompleteList.innerHTML = "";
+         autocompleteSelectedIndex = -1;
+         cityInput.value = "";
+});
+
 
         autocompleteList.appendChild(li);
       });
@@ -656,13 +700,17 @@ async function geolocateByIp() {
     const lat = j.latitude;
     const lon = j.longitude;
 
-    addCity({
-      name: j.city,
-      country: j.country_name || "—",
-      lat,
-      lon,
-      isCurrentLocation: true,
-    });
+    selectCity(
+  {
+    name: j.city,
+    country: j.country_name || "—",
+    lat,
+    lon,
+    isCurrentLocation: true,
+  },
+  { addIfMissing: true }
+);
+
 
     setGeolocateSuccess(j.city); // 🟢 SEUL toast visible
 
@@ -727,9 +775,7 @@ async function onGeoSuccess(position) {
     isCurrentLocation: true,
   };
 
-  addCity(city);
-  selectedCity = city;
-  loadCityWeather(city);
+  selectCity(city, { addIfMissing: true });
 
   setGeolocateSuccess(cityName);
   showToast(`📍 ${cityName}`, "success");
@@ -895,7 +941,7 @@ function renderCityList() {
       }
 
       // 🔵 Définir immédiatement la ville active
-      selectedCity = ci;
+      selectCity(ci); // 🔥 UNE SEULE PORTE D’ENTRÉE
 
       // 🔵 Feedback instantané dans le cadre gauche
       detailsTitle.textContent = ci.name;
@@ -2517,7 +2563,7 @@ function init() {
 
   // 🌍 charger la météo (UNE seule ville)
   if (Array.isArray(cities) && cities.length > 0) {
-    loadCityWeather(cities[0]);
+    selectCity(cities[0]);
   }
 }
 
@@ -2527,6 +2573,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (dayOverlay) {
     dayOverlay.classList.remove("active", "active-day-overlay");
   }
+  startClock();
+
 });
 
 
@@ -3278,3 +3326,28 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeForecastOverlay();
   });
 })();
+/* =====================================================
+   ⏰ HORLOGE HEADER (heure + secondes + date)
+===================================================== */
+function startClock() {
+  const clockEl = document.getElementById("radar-clock");
+  const dateEl = document.getElementById("radar-date");
+  if (!clockEl || !dateEl) return;
+
+  function update() {
+    const now = new Date();
+
+    const h = now.getHours().toString().padStart(2, "0");
+    const m = now.getMinutes().toString().padStart(2, "0");
+    const s = now.getSeconds().toString().padStart(2, "0");
+
+    clockEl.textContent = `${h}:${m}:${s}`;
+
+    const options = { weekday: "short", day: "numeric", month: "short" };
+    dateEl.textContent = now.toLocaleDateString("fr-FR", options);
+  }
+
+  update();
+  setInterval(update, 1000);
+}
+
