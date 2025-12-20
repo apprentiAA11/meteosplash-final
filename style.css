@@ -3814,12 +3814,19 @@ body.theme-day #details-subtitle {
   50%  { opacity: 1; }
   100% { opacity: 0.85; }
 }
-
 /* Mode jour */
-body.theme-day .radar-clock,
-body.theme-day .radar-date {
-  color: #1f2937;
+body.theme-day .radar-clock {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 240, 190, 0.95),
+    rgba(255, 220, 130, 0.9)
+  );
+  color: #2b2100;
+  box-shadow:
+    0 2px 6px rgba(255, 200, 80, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 
 /* Mode nuit */
 body.theme-night .radar-clock,
