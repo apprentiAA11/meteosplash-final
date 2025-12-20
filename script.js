@@ -143,18 +143,16 @@ function degreeToCardinal(angle) {
   return directions[index];
 }
 function getTempColor(t) {
-  if (t == null || isNaN(t)) return "#9ca3af"; // gris neutre
-
-  if (t < -10) return "#0b3c5d";        // bleu foncé
-  if (t < 0)   return "#1e6091";        // bleu moyen
-  if (t < 5)   return "#4ea8de";        // bleu clair
-  if (t < 10)  return "#90dbf4";        // bleu très clair
-  if (t < 15)  return "#b7e4c7";        // vert clair
-  if (t < 20)  return "#74c69d";        // vert moyen
-  if (t < 25)  return "#2d6a4f";        // vert foncé
-  if (t < 30)  return "#f4a261";        // orange
-  if (t < 35)  return "#e63946";        // rouge
-  return "#d00000";                     // rouge vif
+  if (t <= -5) return "#0b1c3d";        // bleu nuit glacial
+  if (t <= 0)  return "#132a52";        // bleu froid
+  if (t <= 5)  return "#1b3f6b";        // bleu acier
+  if (t <= 10) return "#245c73";        // bleu pétrole
+  if (t <= 15) return "#2f6f5f";        // vert froid
+  if (t <= 20) return "#4a7c3a";        // vert tempéré
+  if (t <= 25) return "#7a7a2e";        // jaune olive foncé
+  if (t <= 30) return "#9b5e1a";        // orange brûlé
+  if (t <= 35) return "#8c2f1c";        // rouge chaud
+  return "#5b0f14";                     // rouge sombre extrême
 }
 
 function formatDateISO(date) {
@@ -164,7 +162,7 @@ function formatDateISO(date) {
   return `${y}-${m}-${d}`;
 }
 
-function updateRadarClockFromISO(iso, utcOffsetSeconds) {
+function updateRadarClockFromISO_DISABLED(iso, utcOffsetSeconds) {
   const el = document.getElementById("radar-clock");
   if (!el || !iso || typeof utcOffsetSeconds !== "number") return;
 
@@ -574,7 +572,9 @@ if (cityInput) {
       const r = await fetch(url);
       const j = await r.json();
 
-      if (!j.results) return;
+      
+    startCityClock(j.current.time, j.utc_offset_seconds);
+if (!j.results) return;
 
       autocompleteItems = [];
       j.results.forEach((item) => {
@@ -743,6 +743,32 @@ if (btnGeolocate) {
 /* --------------------------------------------------------------------------
    6-bis. CALLBACKS GÉOLOCALISATION NAVIGATEUR
 -------------------------------------------------------------------------- */
+async function reverseGeocodeCity(lat, lon) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+    const r = await fetch(url, {
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+    const j = await r.json();
+
+    const addr = j.address || {};
+    return {
+      name:
+        addr.city ||
+        addr.town ||
+        addr.village ||
+        addr.suburb ||
+        "Ma position",
+      country: addr.country || ""
+    };
+  } catch (e) {
+    console.warn("Reverse geocoding failed", e);
+    return { name: "Ma position", country: "" };
+  }
+}
+
 async function onGeoSuccess(position) {
   btnGeolocate.classList.remove("location-loading");
 
@@ -755,11 +781,10 @@ async function onGeoSuccess(position) {
 
   // 🌍 récupération du nom de ville (CORS OK)
   try {
-    const r = await fetch("https://ipapi.co/json/");
-    const j = await r.json();
-
-    if (j?.city) cityName = j.city;
-    if (j?.country_name) countryName = j.country_name;
+    // 🌍 reverse geocoding précis (GPS → ville réelle)
+     const geo = await reverseGeocodeCity(lat, lon);
+     cityName = geo.name;
+     countryName = geo.country;
   } catch (e) {
     console.warn("IP geolocation failed");
   }
@@ -1058,7 +1083,8 @@ async function loadCityWeather(ci) {
 
     /* ⏰ Heure locale + thème */
     ci.utcOffset = j.utc_offset_seconds;
-    updateCityClockFromOffset(j.utc_offset_seconds);
+    ci.utcOffset = j.utc_offset_seconds;
+    updateCityClockFromOffset(ci.utcOffset);
     applyThemeMode();
 
     /* ☀️ Soleil */
@@ -3337,17 +3363,67 @@ function startClock() {
   function update() {
     const now = new Date();
 
-    const h = now.getHours().toString().padStart(2, "0");
-    const m = now.getMinutes().toString().padStart(2, "0");
-    const s = now.getSeconds().toString().padStart(2, "0");
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    const s = String(now.getSeconds()).padStart(2, "0");
 
-    clockEl.textContent = `${h}:${m}:${s}`;
+    clockEl.innerHTML = `
+      <span class="h">${h}</span><span class="sep">:</span>
+      <span class="m">${m}</span><span class="sep">:</span>
+      <span class="sec">${s}</span>
+    `;
 
-    const options = { weekday: "short", day: "numeric", month: "short" };
-    dateEl.textContent = now.toLocaleDateString("fr-FR", options);
+    dateEl.textContent = now.toLocaleDateString("fr-FR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    });
   }
 
   update();
   setInterval(update, 1000);
 }
 
+
+
+/* ====================================================================== */
+/* 🌍 HORLOGE LOCALE PAR VILLE — VERROUILLÉE (override-safe)               */
+/* ====================================================================== */
+let cityClockTimer = null;
+
+function updateCityLocalTime(currentIso, utcOffsetSeconds) {
+  if (!currentIso || typeof utcOffsetSeconds !== "number") return;
+
+  const utcMs = Date.parse(currentIso + "Z");
+  const local = new Date(utcMs + utcOffsetSeconds * 1000);
+
+  const h = String(local.getHours()).padStart(2, "0");
+  const m = String(local.getMinutes()).padStart(2, "0");
+  const s = String(local.getSeconds()).padStart(2, "0");
+
+  const clock = document.getElementById("radar-clock");
+  if (clock) clock.textContent = `${h}:${m}:${s}`;
+
+  const dateEl = document.getElementById("radar-date");
+  if (dateEl) {
+    dateEl.textContent = local.toLocaleDateString("fr-FR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+
+  cityLocalHour = local.getHours() + local.getMinutes() / 60;
+}
+
+function startCityClock(baseIso, utcOffsetSeconds) {
+  if (cityClockTimer) clearInterval(cityClockTimer);
+
+  // tick immédiat
+  updateCityLocalTime(baseIso, utcOffsetSeconds);
+
+  // 🔒 override permanent : gagne contre toute autre horloge locale
+  cityClockTimer = setInterval(() => {
+    updateCityLocalTime(baseIso, utcOffsetSeconds);
+  }, 1000);
+}
